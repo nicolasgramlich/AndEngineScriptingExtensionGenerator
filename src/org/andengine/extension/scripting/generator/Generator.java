@@ -51,7 +51,7 @@ public class Generator {
 
 	@Option(required = false, name = "-gen-java-formatter")
 	private JavaFormatter mGenJavaFormatter;
-	
+
 	@Option(required = false, name = "-gen-cpp-class-suffix")
 	private String mGenCppClassSuffix = "";
 
@@ -166,7 +166,7 @@ public class Generator {
 	private void generateClassBoilerplate(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String genJavaClassPackageName = Util.getGenJavaClassPackageName(pClass);
 		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
-		
+
 		/* Generate Java boilerplate. */
 		{
 			/* Package. */
@@ -174,21 +174,21 @@ public class Generator {
 			pGenJavaClassFileWriter.appendSource(" ");
 			pGenJavaClassFileWriter.appendSource(genJavaClassPackageName);
 			pGenJavaClassFileWriter.appendSourceLine(";");
-			
+
 			/* Imports. */
 			pGenJavaClassFileWriter.appendSource("import");
 			pGenJavaClassFileWriter.appendSource(" ");
 			pGenJavaClassFileWriter.appendSource(pClass.getName());
 			pGenJavaClassFileWriter.appendSourceLine(";");
 		}
-		
+
 		/* Generate native boilerplate. */
 		{
 			/* #ifdef. */
 			pGenCppClassFileWriter.appendHeaderLine("#ifndef " + genCppClassName + "_H");
 			pGenCppClassFileWriter.appendHeaderLine("#define " + genCppClassName + "_H");
 			pGenCppClassFileWriter.endHeaderLine();
-			
+
 			/* Imports. */
 			pGenCppClassFileWriter.appendHeaderLine("#include <jni.h>");
 			pGenCppClassFileWriter.appendHeaderLine("#include \"src/ScriptingEnvironment.h\"");
@@ -303,7 +303,7 @@ public class Generator {
 					pGenJavaClassFileWriter.appendSource(" ");
 					pGenJavaClassFileWriter.appendSource(methodName);
 					pGenJavaClassFileWriter.appendSourceLine("() {"); // TODO Parameters
-	
+
 					if(returnType == Void.TYPE) {
 						pGenJavaClassFileWriter.appendSource("\tif(!this.");
 						pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
@@ -323,7 +323,7 @@ public class Generator {
 						pGenJavaClassFileWriter.appendSourceLine("\t}");
 						pGenJavaClassFileWriter.appendSourceLine("}");
 					}
-	
+
 					pGenJavaClassFileWriter.appendSource("private native boolean");
 					pGenJavaClassFileWriter.appendSource(" ");
 					pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
@@ -345,13 +345,13 @@ public class Generator {
 					pGenCppClassFileWriter.endHeaderLine();
 					pGenCppClassFileWriter.decrementHeaderIndent();
 					pGenCppClassFileWriter.appendHeaderLine("}");
-	
+
 					/* Source. */
-	//				JNIEXPORT jboolean JNICALL Java_org_andengine_extension_scripting_entity_Entity_nativeOnAttached(JNIEnv* pJNIEnv, jobject pJObject, jlong pAddress) {
-	//					Entity* entity = (Entity*)pAddress;
-	//
-	//					return entity->onAttached();
-	//				}
+//				JNIEXPORT jboolean JNICALL Java_org_andengine_extension_scripting_entity_Entity_nativeOnAttached(JNIEnv* pJNIEnv, jobject pJObject, jlong pAddress) {
+//					Entity* entity = (Entity*)pAddress;
+//
+//					return entity->onAttached();
+//				}
 				}
 			} else {
 				System.err.println("Skipping callback: " + pClass.getSimpleName() + "." + methodName + " -> " + returnType);
