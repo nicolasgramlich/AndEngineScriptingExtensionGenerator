@@ -17,13 +17,18 @@ public enum JavaFormatter implements IFormatter {
 
 	JALOPY() {
 		@Override
-		public String format(String pString) {
+		public String format(final String pString) {
 			final Jalopy jalopy = new Jalopy();
 			jalopy.setInput(pString, "<inline>");
 
 			final StringBuffer output = new StringBuffer();
 			jalopy.setOutput(output);
-			jalopy.format();
+			try {
+				jalopy.format();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				return pString;
+			}
 
 			return output.toString();
 		}

@@ -19,6 +19,9 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import com.thoughtworks.paranamer.BytecodeReadingParanamer;
+import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
+
 /**
  * (c) Zynga 2012
  *
@@ -170,16 +173,10 @@ public class Generator {
 		/* Generate Java boilerplate. */
 		{
 			/* Package. */
-			pGenJavaClassFileWriter.appendSource("package");
-			pGenJavaClassFileWriter.appendSource(" ");
-			pGenJavaClassFileWriter.appendSource(genJavaClassPackageName);
-			pGenJavaClassFileWriter.appendSourceLine(";");
+			pGenJavaClassFileWriter.appendSource("package").space().append(genJavaClassPackageName).appendLine(";");
 
 			/* Imports. */
-			pGenJavaClassFileWriter.appendSource("import");
-			pGenJavaClassFileWriter.appendSource(" ");
-			pGenJavaClassFileWriter.appendSource(pClass.getName());
-			pGenJavaClassFileWriter.appendSourceLine(";");
+			pGenJavaClassFileWriter.appendSource("import").space().append(pClass.getName()).appendLine(";");
 		}
 
 		/* Generate native boilerplate. */
@@ -204,14 +201,7 @@ public class Generator {
 		/* Generate Java header. */
 		{
 			/* Class. */
-			pGenJavaClassFileWriter.appendSource("public class");
-			pGenJavaClassFileWriter.appendSource(" ");
-			pGenJavaClassFileWriter.appendSource(genJavaClassName);
-			pGenJavaClassFileWriter.appendSource(" ");
-			pGenJavaClassFileWriter.appendSource("extends");
-			pGenJavaClassFileWriter.appendSource(" ");
-			pGenJavaClassFileWriter.appendSource(pClass.getSimpleName());
-			pGenJavaClassFileWriter.appendSourceLine(" {");
+			pGenJavaClassFileWriter.appendSource("public class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().appendLine("{");
 			pGenJavaClassFileWriter.incrementSourceIndent();
 
 			pGenJavaClassFileWriter.appendSourceLine("public static native void nativeInitClass();");
@@ -243,14 +233,43 @@ public class Generator {
 
 		for(final Constructor<?> constructor : pClass.getConstructors()) {
 			if(!Modifier.isPrivate(constructor.getModifiers())) {
-				pGenJavaClassFileWriter.appendSource(Util.getConstructorModifiersAsString(constructor));
-				pGenJavaClassFileWriter.appendSource(" ");
-				pGenJavaClassFileWriter.appendSource(genJavaClassName);
-				pGenJavaClassFileWriter.appendSourceLine("(final long pAddress) {"); // TODO Parameters
-				pGenJavaClassFileWriter.appendSourceLine("\tsuper();"); // TODO Parameters
-				pGenJavaClassFileWriter.endSourceLine();
-				pGenJavaClassFileWriter.appendSourceLine("\tthis.mAddress = pAddress;");
+				final String constructorModifiers = Util.getConstructorModifiersAsString(constructor);
+				pGenJavaClassFileWriter.appendSource(constructorModifiers).space().append(genJavaClassName).append("(");
 
+				/* Parameters. */
+				final Class<?>[] parameterTypes = constructor.getParameterTypes();
+				final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
+				try {
+					final String[] parameterNames = bytecodeReadingParanamer.lookupParameterNames(constructor);
+					{
+						pGenJavaClassFileWriter.appendSource("final long pAddress");
+
+						for(int i = 0; i < parameterTypes.length; i++) {
+							pGenJavaClassFileWriter.appendSource(",").space().append("final").space().append(parameterTypes[i].getName()).space().append(parameterNames[i]);
+						}
+					}
+					pGenJavaClassFileWriter.appendSourceLine(") {");
+
+					pGenJavaClassFileWriter.incrementSourceIndent();
+					pGenJavaClassFileWriter.appendSourceLine("super(");
+					/* Super-call-parameters. */
+					{
+						for(int i = 0; i < parameterTypes.length; i++) {
+							if(i > 0) {
+								pGenJavaClassFileWriter.appendSource(",").space();
+							}
+							pGenJavaClassFileWriter.appendSource("").space().append(parameterNames[i]);
+						}
+					}
+					pGenJavaClassFileWriter.appendSourceLine(");");
+				} catch (final ParameterNamesNotFoundException e) {
+					e.printStackTrace();
+				}
+
+				pGenJavaClassFileWriter.endSourceLine();
+				pGenJavaClassFileWriter.appendSourceLine("this.mAddress = pAddress;");
+
+				pGenJavaClassFileWriter.decrementSourceIndent();
 				pGenJavaClassFileWriter.appendSourceLine("}");
 			}
 		}
