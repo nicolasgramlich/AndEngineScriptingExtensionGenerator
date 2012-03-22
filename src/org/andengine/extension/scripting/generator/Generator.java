@@ -19,7 +19,6 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
 
 /**
@@ -76,6 +75,7 @@ public class Generator {
 	public static void main(final String[] pArgs) throws Exception {
 		new Generator(pArgs);
 	}
+
 
 	public Generator(final String[] pArgs) throws CmdLineException {
 		final CmdLineParser parser = new CmdLineParser(this);
@@ -228,45 +228,33 @@ public class Generator {
 		pGenJavaClassFileWriter.appendSourceLine("private final long mAddress;");
 	}
 
-	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws ParameterNamesNotFoundException {
 		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
 
 		for(final Constructor<?> constructor : pClass.getConstructors()) {
 			if(!Modifier.isPrivate(constructor.getModifiers())) {
-				final String constructorModifiers = Util.getConstructorModifiersAsString(constructor);
-				pGenJavaClassFileWriter.appendSource(constructorModifiers).space().append(genJavaClassName).append("(");
+				final String visibilityModifiers = Util.getVisibilityModifiersAsString(constructor);
+				final String methodParamatersAsString = Util.getMethodParamatersAsString(constructor);
+				final String methodCallParamatersAsString = Util.getMethodCallParamatersAsString(constructor);
 
-				/* Parameters. */
-				final Class<?>[] parameterTypes = constructor.getParameterTypes();
-				final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
-				try {
-					final String[] parameterNames = bytecodeReadingParanamer.lookupParameterNames(constructor);
-					{
-						pGenJavaClassFileWriter.appendSource("final long pAddress");
-
-						for(int i = 0; i < parameterTypes.length; i++) {
-							pGenJavaClassFileWriter.appendSource(",").space().append("final").space().append(parameterTypes[i].getName()).space().append(parameterNames[i]);
-						}
-					}
-					pGenJavaClassFileWriter.appendSourceLine(") {");
-
-					pGenJavaClassFileWriter.incrementSourceIndent();
-					pGenJavaClassFileWriter.appendSourceLine("super(");
-					/* Super-call-parameters. */
-					{
-						for(int i = 0; i < parameterTypes.length; i++) {
-							if(i > 0) {
-								pGenJavaClassFileWriter.appendSource(",").space();
-							}
-							pGenJavaClassFileWriter.appendSource("").space().append(parameterNames[i]);
-						}
-					}
-					pGenJavaClassFileWriter.appendSourceLine(");");
-				} catch (final ParameterNamesNotFoundException e) {
-					e.printStackTrace();
+				pGenJavaClassFileWriter.appendSource(visibilityModifiers).space().append(genJavaClassName).append("(");
+				pGenJavaClassFileWriter.appendSource("final long pAddress");
+				if(methodParamatersAsString != null) {
+					pGenJavaClassFileWriter.appendSource(", ");
+					pGenJavaClassFileWriter.appendSource(methodParamatersAsString);
 				}
+				pGenJavaClassFileWriter.appendSourceLine(") {");
+
+				/* Super call. */
+				pGenJavaClassFileWriter.incrementSourceIndent();
+				pGenJavaClassFileWriter.appendSource("super(");
+				if(methodCallParamatersAsString != null) {
+					pGenJavaClassFileWriter.appendSource(methodCallParamatersAsString);
+				}
+				pGenJavaClassFileWriter.appendSourceLine(");");
 
 				pGenJavaClassFileWriter.endSourceLine();
+
 				pGenJavaClassFileWriter.appendSourceLine("this.mAddress = pAddress;");
 
 				pGenJavaClassFileWriter.decrementSourceIndent();
@@ -314,39 +302,67 @@ public class Generator {
 
 				{
 					/* Source. */
-					final String visibilityModifier = Util.getMethodModifiersAsString(pMethod);
+					final String visibilityModifier = Util.getVisibilityModifiersAsString(pMethod);
+					final String methodParamatersAsString = Util.getMethodParamatersAsString(pMethod);
+					final String methodCallParamatersAsString = Util.getMethodCallParamatersAsString(pMethod);
+
 					pGenJavaClassFileWriter.appendSourceLine("@Override");
-					pGenJavaClassFileWriter.appendSource(visibilityModifier);
-					pGenJavaClassFileWriter.appendSource(" ");
-					pGenJavaClassFileWriter.appendSource(returnType.getSimpleName());
-					pGenJavaClassFileWriter.appendSource(" ");
-					pGenJavaClassFileWriter.appendSource(methodName);
-					pGenJavaClassFileWriter.appendSourceLine("() {"); // TODO Parameters
+					pGenJavaClassFileWriter.appendSource(visibilityModifier).space().append(returnType.getSimpleName()).space().append(methodName).append("(");
+					if(methodParamatersAsString != null) {
+						pGenJavaClassFileWriter.appendSource(methodParamatersAsString);
+					}
+					pGenJavaClassFileWriter.appendSourceLine(") {");
+					pGenJavaClassFileWriter.incrementSourceIndent();
 
 					if(returnType == Void.TYPE) {
-						pGenJavaClassFileWriter.appendSource("\tif(!this.");
+						pGenJavaClassFileWriter.appendSource("if(!this.");
 						pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
-						pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
-						pGenJavaClassFileWriter.appendSource("\t\tsuper.");
-						pGenJavaClassFileWriter.appendSource(methodName);
+						pGenJavaClassFileWriter.appendSource("(this.mAddress)"); // TODO Parameters
+						pGenJavaClassFileWriter.appendSourceLine(") {"); // TODO Parameters
+						pGenJavaClassFileWriter.incrementSourceIndent();
+						pGenJavaClassFileWriter.appendSource("super.").append(methodName);
 						pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
-						pGenJavaClassFileWriter.appendSourceLine("\t}");
-						pGenJavaClassFileWriter.appendSourceLine("}");
+						pGenJavaClassFileWriter.decrementSourceIndent();
+					} else if(returnType == Boolean.TYPE) {
+						pGenJavaClassFileWriter.appendSource("final boolean handledNative = ");
+						pGenJavaClassFileWriter.appendSource("this.").append(javaNativeMethodName).append("(");
+						/* Parameters. */
+						{
+							pGenJavaClassFileWriter.appendSource("this.mAddress");
+							if(methodCallParamatersAsString != null) {
+								pGenJavaClassFileWriter.appendSource(", ");
+								pGenJavaClassFileWriter.appendSource(methodCallParamatersAsString);
+							}
+						}
+						pGenJavaClassFileWriter.appendSourceLine(");");
+						pGenJavaClassFileWriter.appendSourceLine("if(handledNative) {");
+						pGenJavaClassFileWriter.incrementSourceIndent();
+						pGenJavaClassFileWriter.appendSourceLine("return true;");
+						pGenJavaClassFileWriter.decrementSourceIndent();
+						pGenJavaClassFileWriter.appendSourceLine("} else {");
+						pGenJavaClassFileWriter.incrementSourceIndent();
+						pGenJavaClassFileWriter.appendSource("return").space().append("super." + methodName).append("(");
+						if(methodParamatersAsString != null) {
+							pGenJavaClassFileWriter.appendSource(methodCallParamatersAsString);
+						}
+						pGenJavaClassFileWriter.appendSourceLine(");");
+						pGenJavaClassFileWriter.decrementSourceIndent();
 					} else {
-						pGenJavaClassFileWriter.appendSource("\tif(!this.");
-						pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
-						pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
-						pGenJavaClassFileWriter.appendSourceLine("\t\treturn true;");
-						pGenJavaClassFileWriter.appendSourceLine(methodName);
-						pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
-						pGenJavaClassFileWriter.appendSourceLine("\t}");
-						pGenJavaClassFileWriter.appendSourceLine("}");
+						throw new IllegalStateException("Unexpected return type: '" + returnType.getName() + "'.");
 					}
+					pGenJavaClassFileWriter.appendSourceLine("}");
+					pGenJavaClassFileWriter.decrementSourceIndent();
+					pGenJavaClassFileWriter.appendSourceLine("}");
 
 					pGenJavaClassFileWriter.appendSource("private native boolean");
 					pGenJavaClassFileWriter.appendSource(" ");
-					pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
-					pGenJavaClassFileWriter.appendSource("(final long pAddress);"); // TODO Parameters
+					pGenJavaClassFileWriter.appendSource(javaNativeMethodName).append("(");
+					pGenJavaClassFileWriter.appendSource("final long pAddress");
+					if(methodParamatersAsString != null) {
+						pGenJavaClassFileWriter.appendSource(", ");
+						pGenJavaClassFileWriter.appendSource(methodParamatersAsString);
+					}
+					pGenJavaClassFileWriter.appendSource(");");
 					pGenJavaClassFileWriter.endSourceLine();
 				}
 
