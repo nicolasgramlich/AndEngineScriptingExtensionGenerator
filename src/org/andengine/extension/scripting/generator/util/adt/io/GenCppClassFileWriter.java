@@ -28,9 +28,9 @@ public class GenCppClassFileWriter {
 	// Constructors
 	// ===========================================================
 
-	public GenCppClassFileWriter(final File pGenJavaRoot, final Class<?> pClass, final CppFormatter pCppFormatter) {
-		this.mGenCppClassSourceFileWriter = new GenFileWriter(Util.getGenCppClassSourceFile(pGenJavaRoot, pClass), pCppFormatter);
-		this.mGenCppClassHeaderFileWriter = new GenFileWriter(Util.getGenCppClassHeaderFile(pGenJavaRoot, pClass), pCppFormatter);
+	public GenCppClassFileWriter(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix, final CppFormatter pCppFormatter) {
+		this.mGenCppClassSourceFileWriter = new GenFileWriter(Util.getGenCppClassSourceFile(pGenCppRoot, pClass, pGenCppClassSuffix), pCppFormatter);
+		this.mGenCppClassHeaderFileWriter = new GenFileWriter(Util.getGenCppClassHeaderFile(pGenCppRoot, pClass, pGenCppClassSuffix), pCppFormatter);
 	}
 
 	// ===========================================================

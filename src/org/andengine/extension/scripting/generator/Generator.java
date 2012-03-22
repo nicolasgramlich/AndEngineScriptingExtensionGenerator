@@ -51,6 +51,9 @@ public class Generator {
 
 	@Option(required = false, name = "-gen-java-formatter")
 	private JavaFormatter mGenJavaFormatter;
+	
+	@Option(required = false, name = "-gen-cpp-class-suffix")
+	private String mGenCppClassSuffix = "";
 
 	@Option(required = false, name = "-gen-cpp-formatter")
 	private CppFormatter mGenCppFormatter;
@@ -144,7 +147,7 @@ public class Generator {
 
 	private void generateClassCode(final Class<?> pClass) throws IOException {
 		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mGenJavaRoot, pClass, this.mGenJavaClassSuffix, this.mGenJavaFormatter);
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mGenCppFormatter);
+		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mGenCppClassSuffix, this.mGenCppFormatter);
 
 		genJavaClassFileWriter.begin();
 		genCppClassFileWriter.begin();
@@ -162,7 +165,7 @@ public class Generator {
 
 	private void generateClassBoilerplate(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String genJavaClassPackageName = Util.getGenJavaClassPackageName(pClass);
-		final String genCppClassName = Util.getGenCppClassName(pClass);
+		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
 		
 		/* Generate Java boilerplate. */
 		{
@@ -196,7 +199,7 @@ public class Generator {
 
 	private void generateClassHeader(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
-		final String genCppClassName = Util.getGenCppClassName(pClass);
+		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
 
 		/* Generate Java header. */
 		{

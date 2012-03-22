@@ -44,12 +44,12 @@ public class Util {
 		return new File(pGenJavaRoot, Util.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + pGenJavaClassSuffix + ".java");
 	}
 
-	public static File getGenCppClassSourceFile(final File pGenCppRoot, final Class<?> pClass) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + ".cpp");
+	public static File getGenCppClassSourceFile(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix) {
+		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + pGenCppClassSuffix + ".cpp");
 	}
 
-	public static File getGenCppClassHeaderFile(final File pGenCppRoot, final Class<?> pClass) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + ".h");
+	public static File getGenCppClassHeaderFile(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix) {
+		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + pGenCppClassSuffix + ".h");
 	}
 
 	public static String getConstructorModifiersAsString(final Constructor<?> pConstructor) {
@@ -64,8 +64,8 @@ public class Util {
 		return pClass.getSimpleName() + pGenJavaClassSuffix;
 	}
 
-	public static String getGenCppClassName(final Class<?> pClass) {
-		return pClass.getSimpleName();
+	public static String getGenCppClassName(final Class<?> pClass, final String pGenCppClassSuffix) {
+		return pClass.getSimpleName() + pGenCppClassSuffix;
 	}
 
 	public static String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {
