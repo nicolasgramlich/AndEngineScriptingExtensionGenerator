@@ -29,8 +29,8 @@ public class GenCppClassFileWriter {
 	// ===========================================================
 
 	public GenCppClassFileWriter(final File pGenJavaRoot, final Class<?> pClass, final CppFormatter pCppFormatter) {
-		this.mGenCppClassSourceFileWriter = new GenFileWriter(Util.getGenCppClassHeaderFile(pGenJavaRoot, pClass), pCppFormatter);
-		this.mGenCppClassHeaderFileWriter = new GenFileWriter(Util.getGenCppClassSourceFile(pGenJavaRoot, pClass), pCppFormatter);
+		this.mGenCppClassSourceFileWriter = new GenFileWriter(Util.getGenCppClassSourceFile(pGenJavaRoot, pClass), pCppFormatter);
+		this.mGenCppClassHeaderFileWriter = new GenFileWriter(Util.getGenCppClassHeaderFile(pGenJavaRoot, pClass), pCppFormatter);
 	}
 
 	// ===========================================================
@@ -50,25 +50,55 @@ public class GenCppClassFileWriter {
 		this.mGenCppClassHeaderFileWriter.begin();
 	}
 
-	public void appendSource(final String pString) throws IOException {
+	public GenFileWriter appendSource(final String pString) {
 		this.mGenCppClassSourceFileWriter.append(pString);
+		return this.mGenCppClassSourceFileWriter;
 	}
 
-	public void appendSourceLine(final String pString) throws IOException {
+	public GenFileWriter appendSourceLine(final String pString) {
 		this.mGenCppClassSourceFileWriter.appendLine(pString);
+		return this.mGenCppClassSourceFileWriter;
 	}
 
-	public void appendHeader(final String pString) throws IOException {
+	public GenFileWriter endSourceLine() {
+		this.mGenCppClassSourceFileWriter.endLine();
+		return this.mGenCppClassSourceFileWriter;
+	}
+
+	public GenFileWriter appendHeader(final String pString) {
 		this.mGenCppClassHeaderFileWriter.append(pString);
+		return this.mGenCppClassHeaderFileWriter;
 	}
 
-	public void appendHeaderLine(final String pString) throws IOException {
+	public GenFileWriter appendHeaderLine(final String pString) {
 		this.mGenCppClassHeaderFileWriter.appendLine(pString);
+		return this.mGenCppClassHeaderFileWriter;
+	}
+
+	public GenFileWriter endHeaderLine() {
+		this.mGenCppClassHeaderFileWriter.endLine();
+		return this.mGenCppClassHeaderFileWriter;
 	}
 
 	public void end() throws IOException {
 		this.mGenCppClassSourceFileWriter.end();
 		this.mGenCppClassHeaderFileWriter.end();
+	}
+
+	public void incrementHeaderIndent() {
+		this.mGenCppClassHeaderFileWriter.incrementIndent();
+	}
+
+	public void incrementSourceIndent() {
+		this.mGenCppClassSourceFileWriter.incrementIndent();
+	}
+
+	public void decrementHeaderIndent() {
+		this.mGenCppClassHeaderFileWriter.decrementIndent();
+	}
+
+	public void decrementSourceIndent() {
+		this.mGenCppClassSourceFileWriter.decrementIndent();
 	}
 
 	// ===========================================================

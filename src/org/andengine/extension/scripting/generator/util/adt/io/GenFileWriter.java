@@ -21,8 +21,10 @@ public class GenFileWriter {
 	// ===========================================================
 
 	private final StringBuilder mStringBuilder = new StringBuilder();
+	private final StringBuilder mLineBuilder = new StringBuilder();
 	private final File mFile;
 	private final IFormatter mFormatter;
+	private int mIndent;
 
 	// ===========================================================
 	// Constructors
@@ -47,15 +49,33 @@ public class GenFileWriter {
 
 	public void begin() {
 		this.mStringBuilder.setLength(0);
+		this.mLineBuilder.setLength(0);
 	}
 
-	public void append(final String pString) {
-		this.mStringBuilder.append(pString);
+	public GenFileWriter append(final String pString) {
+		this.mLineBuilder.append(pString);
+		return this;
+	}
+	
+	public GenFileWriter space() {
+		this.mLineBuilder.append(' ');
+		return this;
 	}
 
-	public void appendLine(final String pString) {
-		this.mStringBuilder.append(pString);
+	public GenFileWriter appendLine(final String pString) {
+		this.append(pString);
+		this.endLine();
+		return this;
+	}
+
+	public GenFileWriter endLine() {
+		for(int i = 0; i < this.mIndent; i++) {
+			this.mStringBuilder.append('\t');
+		}
+		this.mStringBuilder.append(this.mLineBuilder);
 		this.mStringBuilder.append('\n');
+		this.mLineBuilder.setLength(0);
+		return this;
 	}
 
 	public void end() throws IOException {
@@ -74,6 +94,17 @@ public class GenFileWriter {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void incrementIndent() {
+		this.mIndent++;
+	}
+
+	public void decrementIndent() {
+		if(this.mIndent == 0) {
+			throw new IllegalStateException();
+		}
+		this.mIndent--;
 	}
 
 	// ===========================================================

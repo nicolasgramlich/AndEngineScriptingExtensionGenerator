@@ -8,7 +8,6 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.andengine.extension.scripting.generator.util.Util;
@@ -49,7 +48,7 @@ public class Generator {
 
 	@Option(required = false, name = "-gen-java-class-suffix")
 	private String mGenJavaClassSuffix = "Proxy";
-	
+
 	@Option(required = false, name = "-gen-java-formatter")
 	private JavaFormatter mGenJavaFormatter;
 
@@ -57,7 +56,7 @@ public class Generator {
 	private CppFormatter mGenCppFormatter;
 
 	@Option(required = false, name = "-gen-method-exclude", multiValued = true)
-	private List<String> mGenMethodsExclude = new ArrayList<String>();
+	private List<String> mGenMethodsExclude;
 
 	@Option(required = true, name = "-class", multiValued = true)
 	private List<String> mFullyQualifiedClassNames;
@@ -136,7 +135,7 @@ public class Generator {
 
 				final Class<?> clazz = classLoader.loadClass(className);
 
-				generateClassCode(clazz);
+				this.generateClassCode(clazz);
 			} catch (final Throwable t) {
 				t.printStackTrace();
 			}
@@ -150,51 +149,93 @@ public class Generator {
 		genJavaClassFileWriter.begin();
 		genCppClassFileWriter.begin();
 
-		generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-
-		genJavaClassFileWriter.appendSourceLine("}");
+		this.generateClassBoilerplate(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassFooter(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 
 		genJavaClassFileWriter.end();
 		genCppClassFileWriter.end();
 	}
 
-	private void generateClassHeader(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws IOException {
-		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
+	private void generateClassBoilerplate(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String genJavaClassPackageName = Util.getGenJavaClassPackageName(pClass);
-
-		/* Package. */
-		pGenJavaClassFileWriter.appendSource("package");
-		pGenJavaClassFileWriter.appendSource(" ");
-		pGenJavaClassFileWriter.appendSource(genJavaClassPackageName);
-		pGenJavaClassFileWriter.appendSourceLine(";");
-
-		/* Imports. */
-		pGenJavaClassFileWriter.appendSource("import");
-		pGenJavaClassFileWriter.appendSource(" ");
-		pGenJavaClassFileWriter.appendSource(pClass.getName());
-		pGenJavaClassFileWriter.appendSourceLine(";");
-
-		/* Class. */
-		pGenJavaClassFileWriter.appendSource("public class");
-		pGenJavaClassFileWriter.appendSource(" ");
-		pGenJavaClassFileWriter.appendSource(genJavaClassName);
-		pGenJavaClassFileWriter.appendSource(" ");
-		pGenJavaClassFileWriter.appendSource("extends");
-		pGenJavaClassFileWriter.appendSource(" ");
-		pGenJavaClassFileWriter.appendSource(pClass.getSimpleName());
-		pGenJavaClassFileWriter.appendSourceLine(" {");
+		final String genCppClassName = Util.getGenCppClassName(pClass);
 		
-		pGenJavaClassFileWriter.appendSourceLine("public static native void nativeInitClass();");
+		/* Generate Java boilerplate. */
+		{
+			/* Package. */
+			pGenJavaClassFileWriter.appendSource("package");
+			pGenJavaClassFileWriter.appendSource(" ");
+			pGenJavaClassFileWriter.appendSource(genJavaClassPackageName);
+			pGenJavaClassFileWriter.appendSourceLine(";");
+			
+			/* Imports. */
+			pGenJavaClassFileWriter.appendSource("import");
+			pGenJavaClassFileWriter.appendSource(" ");
+			pGenJavaClassFileWriter.appendSource(pClass.getName());
+			pGenJavaClassFileWriter.appendSourceLine(";");
+		}
+		
+		/* Generate native boilerplate. */
+		{
+			/* #ifdef. */
+			pGenCppClassFileWriter.appendHeaderLine("#ifndef " + genCppClassName + "_H");
+			pGenCppClassFileWriter.appendHeaderLine("#define " + genCppClassName + "_H");
+			pGenCppClassFileWriter.endHeaderLine();
+			
+			/* Imports. */
+			pGenCppClassFileWriter.appendHeaderLine("#include <jni.h>");
+			pGenCppClassFileWriter.appendHeaderLine("#include \"src/ScriptingEnvironment.h\"");
+			pGenCppClassFileWriter.appendHeaderLine("#include \"src/Wrapper.h\""); // TODO Import 'Superclass.h' instead of Wrapper.h
+			pGenCppClassFileWriter.endHeaderLine();
+		}
 	}
 
-	private void generateClassFields(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws IOException {
+	private void generateClassHeader(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
+		final String genCppClassName = Util.getGenCppClassName(pClass);
+
+		/* Generate Java header. */
+		{
+			/* Class. */
+			pGenJavaClassFileWriter.appendSource("public class");
+			pGenJavaClassFileWriter.appendSource(" ");
+			pGenJavaClassFileWriter.appendSource(genJavaClassName);
+			pGenJavaClassFileWriter.appendSource(" ");
+			pGenJavaClassFileWriter.appendSource("extends");
+			pGenJavaClassFileWriter.appendSource(" ");
+			pGenJavaClassFileWriter.appendSource(pClass.getSimpleName());
+			pGenJavaClassFileWriter.appendSourceLine(" {");
+			pGenJavaClassFileWriter.incrementSourceIndent();
+
+			pGenJavaClassFileWriter.appendSourceLine("public static native void nativeInitClass();");
+		}
+
+		/* Generate native header. */
+		{
+			/* Class. */
+			pGenCppClassFileWriter.appendHeader("class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").endLine(); // TODO extend 'Superclass' insteaf of Wra
+			pGenCppClassFileWriter.incrementHeaderIndent();
+		}
+	}
+
+	private void generateClassFooter(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		pGenJavaClassFileWriter.decrementSourceIndent();
+		pGenJavaClassFileWriter.appendSourceLine("}");
+
+		pGenCppClassFileWriter.decrementHeaderIndent();
+		pGenCppClassFileWriter.appendHeaderLine("}");
+		pGenCppClassFileWriter.appendHeaderLine("#endif");
+	}
+
+	private void generateClassFields(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		pGenJavaClassFileWriter.appendSourceLine("private final long mAddress;");
 	}
 
-	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws IOException {
+	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
 
 		for(final Constructor<?> constructor : pClass.getConstructors()) {
@@ -204,7 +245,7 @@ public class Generator {
 				pGenJavaClassFileWriter.appendSource(genJavaClassName);
 				pGenJavaClassFileWriter.appendSourceLine("(final long pAddress) {"); // TODO Parameters
 				pGenJavaClassFileWriter.appendSourceLine("\tsuper();"); // TODO Parameters
-				pGenJavaClassFileWriter.appendSourceLine("");
+				pGenJavaClassFileWriter.endSourceLine();
 				pGenJavaClassFileWriter.appendSourceLine("\tthis.mAddress = pAddress;");
 
 				pGenJavaClassFileWriter.appendSourceLine("}");
@@ -212,7 +253,7 @@ public class Generator {
 		}
 	}
 
-	private void generateClassMethods(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws IOException {
+	private void generateClassMethods(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
@@ -239,48 +280,76 @@ public class Generator {
 		return false;
 	}
 
-	private void generateCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws IOException {
+	private void generateCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		final String methodName = pMethod.getName();
 		if((returnType == Boolean.TYPE) || (returnType == Void.TYPE)) {
 			if(Modifier.isPublic(pMethod.getModifiers())) { // TODO Is this check correct?
-				final String visibilityModifier = Util.getMethodModifiersAsString(pMethod);
-				final String callbackNativeMethodName = Util.generateCallbackNativeMethodName(pMethod);
+				/* Generate Java side of the callback. */
+				final String javaNativeMethodName = Util.getJavaNativeMethodName(pMethod);
+				final String cppMethodName = Util.getCppJNIMethodFullyQualifiedName(pMethod, this.mGenJavaClassSuffix);
 
-				pGenJavaClassFileWriter.appendSourceLine("@Override");
-				pGenJavaClassFileWriter.appendSource(visibilityModifier);
-				pGenJavaClassFileWriter.appendSource(" ");
-				pGenJavaClassFileWriter.appendSource(returnType.getSimpleName());
-				pGenJavaClassFileWriter.appendSource(" ");
-				pGenJavaClassFileWriter.appendSource(methodName);
-				pGenJavaClassFileWriter.appendSourceLine("() {"); // TODO Parameters
-
-				if(returnType == Void.TYPE) {
-					pGenJavaClassFileWriter.appendSource("\tif(!this.");
-					pGenJavaClassFileWriter.appendSource(callbackNativeMethodName);
-					pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
-					pGenJavaClassFileWriter.appendSource("\t\tsuper.");
+				{
+					/* Source. */
+					final String visibilityModifier = Util.getMethodModifiersAsString(pMethod);
+					pGenJavaClassFileWriter.appendSourceLine("@Override");
+					pGenJavaClassFileWriter.appendSource(visibilityModifier);
+					pGenJavaClassFileWriter.appendSource(" ");
+					pGenJavaClassFileWriter.appendSource(returnType.getSimpleName());
+					pGenJavaClassFileWriter.appendSource(" ");
 					pGenJavaClassFileWriter.appendSource(methodName);
-					pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
-					pGenJavaClassFileWriter.appendSourceLine("\t}");
-					pGenJavaClassFileWriter.appendSourceLine("}");
-				} else {
-					pGenJavaClassFileWriter.appendSource("\tif(!this.");
-					pGenJavaClassFileWriter.appendSource(callbackNativeMethodName);
-					pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
-					pGenJavaClassFileWriter.appendSourceLine("\t\treturn true;");
-					pGenJavaClassFileWriter.appendSourceLine(methodName);
-					pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
-					pGenJavaClassFileWriter.appendSourceLine("\t}");
-					pGenJavaClassFileWriter.appendSourceLine("}");
+					pGenJavaClassFileWriter.appendSourceLine("() {"); // TODO Parameters
+	
+					if(returnType == Void.TYPE) {
+						pGenJavaClassFileWriter.appendSource("\tif(!this.");
+						pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
+						pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
+						pGenJavaClassFileWriter.appendSource("\t\tsuper.");
+						pGenJavaClassFileWriter.appendSource(methodName);
+						pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
+						pGenJavaClassFileWriter.appendSourceLine("\t}");
+						pGenJavaClassFileWriter.appendSourceLine("}");
+					} else {
+						pGenJavaClassFileWriter.appendSource("\tif(!this.");
+						pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
+						pGenJavaClassFileWriter.appendSourceLine("(this.mAddress)) {"); // TODO Parameters
+						pGenJavaClassFileWriter.appendSourceLine("\t\treturn true;");
+						pGenJavaClassFileWriter.appendSourceLine(methodName);
+						pGenJavaClassFileWriter.appendSourceLine("();"); // TODO Parameters
+						pGenJavaClassFileWriter.appendSourceLine("\t}");
+						pGenJavaClassFileWriter.appendSourceLine("}");
+					}
+	
+					pGenJavaClassFileWriter.appendSource("private native boolean");
+					pGenJavaClassFileWriter.appendSource(" ");
+					pGenJavaClassFileWriter.appendSource(javaNativeMethodName);
+					pGenJavaClassFileWriter.appendSource("(final long pAddress);"); // TODO Parameters
+					pGenJavaClassFileWriter.endSourceLine();
 				}
 
-				pGenJavaClassFileWriter.appendSource("private native boolean");
-				pGenJavaClassFileWriter.appendSource(" ");
-				pGenJavaClassFileWriter.appendSource(callbackNativeMethodName);
-				pGenJavaClassFileWriter.appendSource("(final long pAddress);"); // TODO Parameters
-				pGenJavaClassFileWriter.appendSourceLine("");
+				/* Generate native side of the callback. */
+				{
+					/* Header. */
+					pGenCppClassFileWriter.appendHeaderLine("extern \"C\" {");
+					pGenCppClassFileWriter.incrementHeaderIndent();
+					pGenCppClassFileWriter.appendHeader("JNIEXPORT jboolean JNICALL");
+					pGenCppClassFileWriter.appendHeader(" ");
+					pGenCppClassFileWriter.appendHeader(cppMethodName);
+					pGenCppClassFileWriter.appendHeader("(");
+					pGenCppClassFileWriter.appendHeader("JNIEnv*, jobject, jlong"); // TODO Parameters
+					pGenCppClassFileWriter.appendHeader(");");
+					pGenCppClassFileWriter.endHeaderLine();
+					pGenCppClassFileWriter.decrementHeaderIndent();
+					pGenCppClassFileWriter.appendHeaderLine("}");
+	
+					/* Source. */
+	//				JNIEXPORT jboolean JNICALL Java_org_andengine_extension_scripting_entity_Entity_nativeOnAttached(JNIEnv* pJNIEnv, jobject pJObject, jlong pAddress) {
+	//					Entity* entity = (Entity*)pAddress;
+	//
+	//					return entity->onAttached();
+	//				}
+				}
 			} else {
 				System.err.println("Skipping callback: " + pClass.getSimpleName() + "." + methodName + " -> " + returnType);
 			}

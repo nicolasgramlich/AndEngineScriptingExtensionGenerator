@@ -47,16 +47,31 @@ public class GenJavaClassFileWriter {
 		this.mGenJavaClassSourceFileWriter.begin();
 	}
 
-	public void appendSource(final String pString) {
+	public GenFileWriter appendSource(final String pString) {
 		this.mGenJavaClassSourceFileWriter.append(pString);
+		return this.mGenJavaClassSourceFileWriter;
 	}
 
-	public void appendSourceLine(final String pString) {
+	public GenFileWriter appendSourceLine(final String pString) {
 		this.mGenJavaClassSourceFileWriter.appendLine(pString);
+		return this.mGenJavaClassSourceFileWriter;
+	}
+	
+	public GenFileWriter endSourceLine() {
+		this.mGenJavaClassSourceFileWriter.endLine();
+		return this.mGenJavaClassSourceFileWriter;
 	}
 
 	public void end() throws IOException {
 		this.mGenJavaClassSourceFileWriter.end();
+	}
+
+	public void incrementSourceIndent() {
+		this.mGenJavaClassSourceFileWriter.incrementIndent();
+	}
+
+	public void decrementSourceIndent() {
+		this.mGenJavaClassSourceFileWriter.decrementIndent();
 	}
 
 	// ===========================================================
