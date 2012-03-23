@@ -220,7 +220,7 @@ public class Generator {
 		pGenJavaClassFileWriter.appendSourceLine("}");
 
 		pGenCppClassFileWriter.decrementHeaderIndent();
-		pGenCppClassFileWriter.appendHeaderLine("}");
+		pGenCppClassFileWriter.appendHeaderLine("};");
 		pGenCppClassFileWriter.appendHeaderLine("#endif");
 	}
 
