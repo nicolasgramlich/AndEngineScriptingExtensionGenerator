@@ -78,6 +78,7 @@ public class GenFileWriter<E extends Enum<?>> {
 
 		final StringBuilder stringBuilder = new StringBuilder();
 		for(final GenFileWriterSegment genFileWriterSegment : this.mGenFileWriterSegments.values()) {
+			genFileWriterSegment.end();
 			stringBuilder.append(genFileWriterSegment.getContent());
 		}
 
@@ -156,6 +157,11 @@ public class GenFileWriter<E extends Enum<?>> {
 
 		public GenFileWriterSegment space() {
 			this.mLineStringBuilder.append(' ');
+			return this;
+		}
+
+		public GenFileWriterSegment newline() {
+			this.mLineStringBuilder.append('\n');
 			return this;
 		}
 

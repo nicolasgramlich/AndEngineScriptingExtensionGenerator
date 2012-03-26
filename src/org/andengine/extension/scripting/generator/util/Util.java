@@ -93,7 +93,7 @@ public class Util {
 		return "native" + Util.capitalizeFirstCharacter(pMethod.getName());
 	}
 
-	public static String getCppJNIMethodFullyQualifiedName(final Method pMethod, final String pGenJavaClassSuffix) {
+	public static String getJNIExportMethodName(final Method pMethod, final String pGenJavaClassSuffix) {
 		return "Java_" + Util.getGenJavaClassPackageName(pMethod.getDeclaringClass()).replace('.', '_') + "_" + Util.getGenJavaClassName(pMethod.getDeclaringClass(), pGenJavaClassSuffix) + "_" + Util.getJavaNativeMethodName(pMethod);
 	}
 
