@@ -55,6 +55,10 @@ public class Util {
 		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + pGenCppClassSuffix + ".h");
 	}
 
+	public static String getGenCppClassHeaderImport(final Class<?> pClass, final String pGenCppClassSuffix) {
+		return "src/" + pClass.getName().replace('.', '/') + pGenCppClassSuffix + ".h";
+	}
+
 	public static String getVisibilityModifiersAsString(final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			return Util.getModifiersAsString(((Constructor<?>)pAccessibleObject).getModifiers());
@@ -71,6 +75,10 @@ public class Util {
 
 	public static String getGenCppClassName(final Class<?> pClass, final String pGenCppClassSuffix) {
 		return pClass.getSimpleName() + pGenCppClassSuffix;
+	}
+	
+	public static String getGenCppStaticClassMemberName(final Class<?> pClass, final String pGenCppClassSuffix) {
+		return "s" + pClass.getSimpleName() + pGenCppClassSuffix + "Class";
 	}
 
 	public static String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {

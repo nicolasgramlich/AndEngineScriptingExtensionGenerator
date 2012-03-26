@@ -215,8 +215,21 @@ public class Generator {
 
 		/* Generate native header. */
 		{
-			/* Class. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").end(); // TODO extend 'Superclass' insteaf of Wra
+			/* Header. */
+			{
+				/* Class. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").end(); // TODO extend 'Superclass' insteaf of Wra
+			}
+
+			/* Source. */
+			{
+				/* Includes. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, "#include <cstdlib>").end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, "#include \"").append(Util.getGenCppClassHeaderImport(pClass, this.mGenCppClassSuffix)).append("\"").end();
+
+				/* Statics. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix)).append(";").end();
+			}
 		}
 	}
 
