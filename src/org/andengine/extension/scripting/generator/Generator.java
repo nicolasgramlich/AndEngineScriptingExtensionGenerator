@@ -298,6 +298,8 @@ public class Generator {
 				/* Generate Java side of the callback. */
 				final String javaNativeMethodName = Util.getJavaNativeMethodName(pMethod);
 				final String cppMethodName = Util.getCppJNIMethodFullyQualifiedName(pMethod, this.mGenJavaClassSuffix);
+				final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+				final String uncapitalizedGenCppClassName = Util.uncapitalizeFirstCharacter(genCppClassName);
 
 				{
 					/* Source. */
@@ -369,8 +371,8 @@ public class Generator {
 					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
 					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, Util.getJNIExportMethodParamatersAsString(pMethod));
 					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ") {").end();
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "Entity").append("*").space().append("entity").append(" = ").append("(").append("Entity").append("*)").append("pAddress;").end();
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return").space().append("entity").append("->").append("onAttached").append("();").end(); // TODO Parameters
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppClassName).append("*").space().append(uncapitalizedGenCppClassName).append(" = ").append("(").append(genCppClassName).append("*)").append("pAddress;").end();
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return").space().append(uncapitalizedGenCppClassName).append("->").append("onAttached").append("();").end(); // TODO Parameters
 					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
 				}
 			} else {

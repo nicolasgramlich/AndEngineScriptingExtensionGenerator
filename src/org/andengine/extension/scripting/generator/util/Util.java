@@ -93,6 +93,10 @@ public class Util {
 		return Character.toUpperCase(methodName.charAt(0)) + methodName.substring(1, methodName.length());
 	}
 
+	public static String uncapitalizeFirstCharacter(final String methodName) {
+		return Character.toLowerCase(methodName.charAt(0)) + methodName.substring(1, methodName.length());
+	}
+
 	public static String getModifiersAsString(final int pModifiers) {
 		final StringBuilder modifiersBuilder = new StringBuilder();
 
