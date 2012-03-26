@@ -56,10 +56,6 @@ public class GenJavaClassFileWriter {
 		return this.mGenJavaClassSourceFileWriter.append(pGenJavaClassSourceFileSegment, pString);
 	}
 
-	public GenFileWriterSegment appendLine(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment, final String pString) {
-		return this.mGenJavaClassSourceFileWriter.appendLine(pGenJavaClassSourceFileSegment, pString);
-	}
-
 	public GenFileWriterSegment endLine(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
 		return this.mGenJavaClassSourceFileWriter.endLine(pGenJavaClassSourceFileSegment);
 	}

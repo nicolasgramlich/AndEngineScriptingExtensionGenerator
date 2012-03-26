@@ -107,69 +107,138 @@ public class Util {
 		return modifiersBuilder.toString();
 	}
 
-	public static String getMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes;
-		if(pAccessibleObject instanceof Constructor<?>) {
-			parameterTypes = ((Constructor<?>)pAccessibleObject).getParameterTypes();
-		} else if(pAccessibleObject instanceof Method) {
-			parameterTypes = ((Method)pAccessibleObject).getParameterTypes();
-		} else {
-			throw new IllegalArgumentException();
-		}
+	public static String getJavaMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
 
-		final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
-		final String[] parameterNames = bytecodeReadingParanamer.lookupParameterNames(pAccessibleObject);
-		
-		return Util.getMethodParamatersAsString(parameterTypes, parameterNames);
+		return Util.getJavaMethodParamatersAsString(parameterTypes, parameterNames);
 	}
 
-	public static String getMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+	public static String getJavaMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
 
 		for(int i = 0; i < pParameterTypes.length; i++) {
+			final String parameterName = pParameterNames[i];
+			// TODO Add import, when name != simplename.
+//			final String parameterTypeName = parameterType.getName();
+			final String parameterTypeName = pParameterTypes[i].getSimpleName();
+
 			if(i == 0) {
 				stringBuilder.append("");
 			} else {
 				stringBuilder.append(", ");
 			}
 
-			// TODO Add import, when name != simplename. 
-//			final String parameterTypeName = parameterType.getName();
-			final String parameterTypeName = pParameterTypes[i].getSimpleName();
-			
-			stringBuilder.append("final").append(' ').append(parameterTypeName).append(' ').append(pParameterNames[i]);
+			stringBuilder.append("final").append(' ').append(parameterTypeName).append(' ').append(parameterName);
 		}
 
 		return stringBuilder.toString();
 	}
 
-	public static String getMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
-		final String[] parameterNames = bytecodeReadingParanamer.lookupParameterNames(pAccessibleObject);
-		
-		return Util.getMethodCallParamatersAsString(parameterNames);
+	public static String getJavaMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+
+		return Util.getJavaMethodCallParamatersAsString(parameterNames);
 	}
 
-	public static String getMethodCallParamatersAsString(final String[] pParameterNames) {
+	public static String getJavaMethodCallParamatersAsString(final String[] pParameterNames) {
 		if(pParameterNames.length == 0) {
 			return null;
 		}
 
 		final StringBuilder stringBuilder = new StringBuilder();
-		
+
 		for(int i = 0; i < pParameterNames.length; i++) {
+			final String parameterName = pParameterNames[i];
 			if(i == 0) {
 				stringBuilder.append("");
 			} else {
 				stringBuilder.append(", ");
 			}
-			stringBuilder.append(pParameterNames[i]);
+			stringBuilder.append(parameterName);
 		}
-		
+
 		return stringBuilder.toString();
+	}
+
+	public static String getJNIExportMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+
+		return Util.getJNIExportMethodHeaderParamatersAsString(parameterTypes);
+	}
+
+	public static String getJNIExportMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
+		final StringBuilder stringBuilder = new StringBuilder("JNIEnv*, jobject, jlong");
+
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterTypeName = Util.getJNIParameterTypeName(parameterType);
+
+			stringBuilder.append(", ").append(parameterTypeName);
+		}
+
+		return stringBuilder.toString();
+	}
+
+	public static String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+
+		return Util.getJNIExportMethodParamatersAsString(parameterTypes, parameterNames);
+	}
+
+	public static String getJNIExportMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+		final StringBuilder stringBuilder = new StringBuilder("JNIEnv* pJNIEnv, jobject pJObject, jlong pAddress");
+
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterTypeName = Util.getJNIParameterTypeName(parameterType);
+			final String parameterName = pParameterNames[i];
+
+			stringBuilder.append(", ").append(parameterTypeName).append(' ').append(parameterName);
+		}
+
+		return stringBuilder.toString();
+	}
+
+	private static String getJNIParameterTypeName(final Class<?> parameterType) {
+		final String parameterTypeName;
+		if(parameterType == Byte.TYPE) {
+			parameterTypeName = "jbyte";
+		} else if(parameterType == Character.TYPE) {
+			parameterTypeName = "jchar";
+		} else if(parameterType == Short.TYPE) {
+			parameterTypeName = "jshort";
+		} else if(parameterType == Integer.TYPE) {
+			parameterTypeName = "jint";
+		} else if(parameterType == Long.TYPE) {
+			parameterTypeName = "jlong";
+		} else if(parameterType == Float.TYPE) {
+			parameterTypeName = "jfloat";
+		} else if(parameterType == Double.TYPE) {
+			parameterTypeName = "jdouble";
+		} else {
+			parameterTypeName = "jobject";
+		}
+		return parameterTypeName;
+	}
+
+	private static String[] getParameterNames(final AccessibleObject pAccessibleObject) {
+		final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
+		return bytecodeReadingParanamer.lookupParameterNames(pAccessibleObject);
+	}
+
+	private static Class<?>[] getParameterTypes(final AccessibleObject pAccessibleObject) {
+		if(pAccessibleObject instanceof Constructor<?>) {
+			return ((Constructor<?>)pAccessibleObject).getParameterTypes();
+		} else if(pAccessibleObject instanceof Method) {
+			return ((Method)pAccessibleObject).getParameterTypes();
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	// ===========================================================

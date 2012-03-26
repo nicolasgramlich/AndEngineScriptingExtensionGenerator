@@ -60,20 +60,12 @@ public class GenCppClassFileWriter {
 		return this.mGenCppClassSourceFileWriter.append(pGenCppClassSourceFileSegment, pString);
 	}
 
-	public GenFileWriterSegment appendLine(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment, final String pString) {
-		return this.mGenCppClassSourceFileWriter.appendLine(pGenCppClassSourceFileSegment, pString);
-	}
-
 	public GenFileWriterSegment endLine(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment) {
 		return this.mGenCppClassSourceFileWriter.endLine(pGenCppClassSourceFileSegment);
 	}
 
 	public GenFileWriterSegment append(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment, final String pString) {
 		return this.mGenCppClassHeaderFileWriter.append(pGenCppClassHeaderFileSegment, pString);
-	}
-
-	public GenFileWriterSegment appendLine(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment, final String pString) {
-		return this.mGenCppClassHeaderFileWriter.appendLine(pGenCppClassHeaderFileSegment, pString);
 	}
 
 	public GenFileWriterSegment endLine(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment) {
@@ -104,6 +96,13 @@ public class GenCppClassFileWriter {
 		// ===========================================================
 		// Elements
 		// ===========================================================
+
+		INCLUDES,
+		STATICS,
+		CLASS_INIT,
+		JNI_EXPORTS,
+		CONSTRUCTORS,
+		METHODS
 
 		// ===========================================================
 		// Constants

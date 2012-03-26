@@ -69,12 +69,8 @@ public class GenFileWriter<E extends Enum<?>> {
 		return this.getGenFileWriterSegment(pSegment).space();
 	}
 
-	public GenFileWriterSegment appendLine(final E pSegment, final String pString) {
-		return this.getGenFileWriterSegment(pSegment).appendLine(pString);
-	}
-
 	public GenFileWriterSegment endLine(final E pSegment) {
-		return this.getGenFileWriterSegment(pSegment).endLine();
+		return this.getGenFileWriterSegment(pSegment).end();
 	}
 
 	public void end() throws IOException {
@@ -168,13 +164,7 @@ public class GenFileWriter<E extends Enum<?>> {
 			return this;
 		}
 
-		public GenFileWriterSegment appendLine(final String pString) {
-			this.append(pString);
-			this.endLine();
-			return this;
-		}
-
-		public GenFileWriterSegment endLine() {
+		public GenFileWriterSegment end() {
 			for(int i = 0; i < this.mIndent; i++) {
 				this.mSegmentStringBuilder.append('\t');
 			}
