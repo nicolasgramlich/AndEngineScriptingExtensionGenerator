@@ -58,7 +58,7 @@ public class Generator {
 	private JavaFormatter mGenJavaFormatter;
 
 	@Option(required = false, name = "-gen-cpp-class-suffix")
-	private String mGenCppClassSuffix = "";
+	private String mGenCppClassSuffix;
 
 	@Option(required = false, name = "-gen-cpp-formatter")
 	private CppFormatter mGenCppFormatter;
@@ -198,6 +198,11 @@ public class Generator {
 
 			/* Externs. */
 			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
+
+			/* Methods. */
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PROTECTED, "protected:").end();
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
 		}
 
 		/* Generate Java header. */
@@ -232,13 +237,23 @@ public class Generator {
 	}
 
 	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws ParameterNamesNotFoundException {
-		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
-
 		for(final Constructor<?> constructor : pClass.getConstructors()) {
-			if(!Modifier.isPrivate(constructor.getModifiers())) {
-				final String visibilityModifiers = Util.getVisibilityModifiersAsString(constructor);
-				final String methodParamatersAsString = Util.getJavaMethodParamatersAsString(constructor);
-				final String methodCallParamatersAsString = Util.getJavaMethodCallParamatersAsString(constructor);
+			this.generateClassConstructor(pClass, constructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		}
+	}
+
+	private void generateClassConstructor(final Class<?> pClass, final Constructor<?> pConstructor, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
+		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+
+		final int modifiers = pConstructor.getModifiers();
+		if(!Modifier.isPrivate(modifiers)) {
+			final String visibilityModifiers = Util.getVisibilityModifiersAsString(pConstructor);
+
+			/* Generate Java constructors. */
+			{
+				final String methodParamatersAsString = Util.getJavaMethodParamatersAsString(pConstructor);
+				final String methodCallParamatersAsString = Util.getJavaMethodCallParamatersAsString(pConstructor);
 
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, visibilityModifiers).space().append(genJavaClassName).append("(");
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "final long pAddress");
@@ -259,6 +274,21 @@ public class Generator {
 
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "}").end();
 			}
+
+			/* Generate native constructor. */
+			{
+				final GenCppClassSourceFileSegment genCppClassSourceFileSegment = Generator.getGenCppClassSourceFileSegmentByVisibilityModifier(modifiers);
+				final GenCppClassHeaderFileSegment genCppClassHeaderFileSegment = Generator.getGenCppClassHeaderFileSegmentByVisibilityModifier(modifiers);
+
+				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppClassName);
+				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, "(");
+				final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pConstructor);
+				if(genCppMethodHeaderParamatersAsString != null) {
+					pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
+				}
+				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, ");").end();
+				// Sprite(float, float, float, float, TextureRegion*, VertexBufferObjectManager*);
+			}
 		}
 	}
 
@@ -266,27 +296,17 @@ public class Generator {
 		for(final Method method : pClass.getMethods()) {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
-				if(methodName.startsWith("get")) {
+				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
 					this.generateGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("set")) {
 					this.generateSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("on")) {
 					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
-//					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
 				}
 			}
 		}
-	}
-
-	private boolean isGenMethodExcluded(final Method pMethod) {
-		final String methodName = pMethod.getName();
-		for(final String genMethodExclude : this.mGenMethodsExclude) {
-			if(genMethodExclude.equals(methodName)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private void generateCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
@@ -393,6 +413,36 @@ public class Generator {
 		final Class<?> returnType = pMethod.getReturnType();
 		if((returnType == Byte.TYPE) || (returnType == Short.TYPE) || (returnType == Integer.TYPE) || (returnType == Long.TYPE) || (returnType == Float.TYPE) || (returnType == Double.TYPE) || (returnType == Boolean.TYPE)) {
 //			System.out.println(pClass.getSimpleName() + "." + pMethod.getName() + " -> " + returnType);
+		}
+	}
+
+	private boolean isGenMethodExcluded(final Method pMethod) {
+		final String methodName = pMethod.getName();
+		for(final String genMethodExclude : this.mGenMethodsExclude) {
+			if(genMethodExclude.equals(methodName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
+		if(Modifier.isPublic(modifiers)) {
+			return GenCppClassHeaderFileSegment.METHODS_PUBLIC;
+		} else if(Modifier.isProtected(modifiers)) {
+			return GenCppClassHeaderFileSegment.METHODS_PROTECTED;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private static GenCppClassSourceFileSegment getGenCppClassSourceFileSegmentByVisibilityModifier(final int modifiers) {
+		if(Modifier.isPublic(modifiers)) {
+			return GenCppClassSourceFileSegment.METHODS_PUBLIC;
+		} else if(Modifier.isProtected(modifiers)) {
+			return GenCppClassSourceFileSegment.METHODS_PROTECTED;
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 

@@ -101,8 +101,8 @@ public class GenCppClassFileWriter {
 		STATICS,
 		CLASS_INIT,
 		JNI_EXPORTS,
-		CONSTRUCTORS,
-		METHODS
+		METHODS_PROTECTED,
+		METHODS_PUBLIC;
 
 		// ===========================================================
 		// Constants
@@ -142,9 +142,9 @@ public class GenCppClassFileWriter {
 		INCLUDES,
 		EXTERNS,
 		CLASS_START,
-		METHODS_PRIVATE,
-		METHODS_PROTECTED,
 		METHODS_PUBLIC,
+		METHODS_PROTECTED,
+		METHODS_PRIVATE,
 		CLASS_END,
 		CLASS_IFDEF_FOOT;
 		

@@ -187,6 +187,33 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
+	public static String getGenCppMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+		
+		return Util.getGenCppMethodHeaderParamatersAsString(parameterTypes);
+	}
+	
+	public static String getGenCppMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
+		if(pParameterTypes.length == 0) {
+			return null;
+		}
+		final StringBuilder stringBuilder = new StringBuilder();
+		
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType);
+			
+			if(i == 0) {
+				stringBuilder.append("");
+			} else {
+				stringBuilder.append(", ");
+			}
+			stringBuilder.append(parameterTypeName);
+		}
+		
+		return stringBuilder.toString();
+	}
+
 	public static String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
 		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
 		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
@@ -226,6 +253,30 @@ public class Util {
 			parameterTypeName = "jdouble";
 		} else {
 			parameterTypeName = "jobject";
+		}
+		return parameterTypeName;
+	}
+
+	private static String getGenCppParameterTypeName(final Class<?> parameterType) {
+		final String parameterTypeName;
+		if(parameterType == Byte.TYPE) {
+			parameterTypeName = "jbyte";
+		} else if(parameterType == Character.TYPE) {
+			parameterTypeName = "jchar";
+		} else if(parameterType == Short.TYPE) {
+			parameterTypeName = "jshort";
+		} else if(parameterType == Integer.TYPE) {
+			parameterTypeName = "jint";
+		} else if(parameterType == Long.TYPE) {
+			parameterTypeName = "jlong";
+		} else if(parameterType == Float.TYPE) {
+			parameterTypeName = "jfloat";
+		} else if(parameterType == Double.TYPE) {
+			parameterTypeName = "jdouble";
+		} else {
+			// TODO Add import, when name != simplename.
+//			parameterTypeName = parameterType.getName();
+			parameterTypeName = parameterType.getSimpleName() + "*";
 		}
 		return parameterTypeName;
 	}
