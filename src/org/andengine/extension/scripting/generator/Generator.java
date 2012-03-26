@@ -2,6 +2,7 @@ package org.andengine.extension.scripting.generator;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -303,6 +304,9 @@ public class Generator {
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "this.mAddress = pAddress;").end();
 				pGenJavaClassFileWriter.decrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "}").end();
+
+				/* Add imports. */
+				this.generateImports(pConstructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 			}
 
 			/* Generate native constructor. */
@@ -327,10 +331,13 @@ public class Generator {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
+					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("set")) {
+					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("on")) {
+					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
 					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
@@ -461,13 +468,15 @@ public class Generator {
 	private void generateSetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
-//		System.out.println("Generating setter: " + pClass.getSimpleName() + "." + pMethod.getName() + " -> " + returnType);
+		// TODO Generate code.
 	}
 
 	private void generateGetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
+
+		// TODO Support all types?
 		if((returnType == Byte.TYPE) || (returnType == Short.TYPE) || (returnType == Integer.TYPE) || (returnType == Long.TYPE) || (returnType == Float.TYPE) || (returnType == Double.TYPE) || (returnType == Boolean.TYPE)) {
-//			System.out.println(pClass.getSimpleName() + "." + pMethod.getName() + " -> " + returnType);
+			// TODO Generate code.
 		}
 	}
 
@@ -498,6 +507,25 @@ public class Generator {
 			return GenCppClassSourceFileSegment.METHODS_PROTECTED;
 		} else {
 			throw new IllegalArgumentException();
+		}
+	}
+
+	private void generateImports(final AccessibleObject pAccessibleObject, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		if(pAccessibleObject instanceof Constructor<?>) {
+			this.generateImports(((Constructor<?>)pAccessibleObject).getParameterTypes(), pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		} else if(pAccessibleObject instanceof Method) {
+			this.generateImports(((Method)pAccessibleObject).getParameterTypes(), pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private void generateImports(final Class<?>[] pParameterTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		for(final Class<?> parameterType : pParameterTypes) {
+			if(!Util.isPrimitiveParameter(parameterType)) {
+				final String parameterTypeName = Util.getClassNameForImport(parameterType);
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(parameterTypeName).append(";").end();
+			}
 		}
 	}
 

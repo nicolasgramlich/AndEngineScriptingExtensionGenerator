@@ -56,7 +56,7 @@ public class Util {
 	}
 
 	public static String getGenCppClassHeaderImport(final Class<?> pClass, final String pGenCppClassSuffix) {
-		return "src/" + pClass.getName().replace('.', '/') + pGenCppClassSuffix + ".h";
+		return "src/" + pClass.getName().replace('.', '/').replace('&', '/') + pGenCppClassSuffix + ".h";
 	}
 
 	public static String getVisibilityModifiersAsString(final AccessibleObject pAccessibleObject) {
@@ -243,7 +243,7 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	private static String getJNIParameterTypeName(final Class<?> parameterType) {
+	public static String getJNIParameterTypeName(final Class<?> parameterType) {
 		final String parameterTypeName;
 		if(parameterType == Byte.TYPE) {
 			parameterTypeName = "jbyte";
@@ -265,9 +265,11 @@ public class Util {
 		return parameterTypeName;
 	}
 
-	private static String getGenCppParameterTypeName(final Class<?> parameterType) {
+	public static String getGenCppParameterTypeName(final Class<?> parameterType) {
 		final String parameterTypeName;
-		if(parameterType == Byte.TYPE) {
+		if(parameterType == Boolean.TYPE) {
+			parameterTypeName = "jboolean";
+		} else if(parameterType == Byte.TYPE) {
 			parameterTypeName = "jbyte";
 		} else if(parameterType == Character.TYPE) {
 			parameterTypeName = "jchar";
@@ -289,12 +291,36 @@ public class Util {
 		return parameterTypeName;
 	}
 
-	private static String[] getParameterNames(final AccessibleObject pAccessibleObject) {
+	public static boolean isPrimitiveParameter(final Class<?> parameterType) {
+		if(parameterType == Boolean.TYPE) {
+			return true;
+		} else if(parameterType == Byte.TYPE) {
+			return true;
+		} else if(parameterType == Character.TYPE) {
+			return true;
+		} else if(parameterType == Short.TYPE) {
+			return true;
+		} else if(parameterType == Integer.TYPE) {
+			return true;
+		} else if(parameterType == Long.TYPE) {
+			return true;
+		} else if(parameterType == Float.TYPE) {
+			return true;
+		} else if(parameterType == Double.TYPE) {
+			return true;
+		} else if(parameterType == Object.class) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public static String[] getParameterNames(final AccessibleObject pAccessibleObject) {
 		final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
 		return bytecodeReadingParanamer.lookupParameterNames(pAccessibleObject);
 	}
 
-	private static Class<?>[] getParameterTypes(final AccessibleObject pAccessibleObject) {
+	public static Class<?>[] getParameterTypes(final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			return ((Constructor<?>)pAccessibleObject).getParameterTypes();
 		} else if(pAccessibleObject instanceof Method) {
@@ -302,6 +328,10 @@ public class Util {
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+
+	public static String getClassNameForImport(final Class<?> pClass) {
+		return pClass.getName().replace('$', '.');
 	}
 
 	// ===========================================================
