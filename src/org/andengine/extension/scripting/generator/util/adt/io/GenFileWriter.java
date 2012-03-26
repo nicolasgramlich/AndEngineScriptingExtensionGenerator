@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * (c) Zynga 2012
@@ -11,7 +13,7 @@ import java.io.Writer;
  * @author Nicolas Gramlich <ngramlich@zynga.com>
  * @since 15:02:38 - 21.03.2012
  */
-public class GenFileWriter {
+public class GenFileWriter<E extends Enum<?>> {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -20,11 +22,9 @@ public class GenFileWriter {
 	// Fields
 	// ===========================================================
 
-	private final StringBuilder mStringBuilder = new StringBuilder();
-	private final StringBuilder mLineBuilder = new StringBuilder();
+	private final SortedMap<E, GenFileWriterSegment> mGenFileWriterSegments = new TreeMap<E, GenFileWriterSegment>();
 	private final File mFile;
 	private final IFormatter mFormatter;
-	private int mIndent;
 
 	// ===========================================================
 	// Constructors
@@ -39,6 +39,16 @@ public class GenFileWriter {
 	// Getter & Setter
 	// ===========================================================
 
+	public GenFileWriterSegment getGenFileWriterSegment(final E pSegment) {
+		if(this.mGenFileWriterSegments.containsKey(pSegment)) {
+			return this.mGenFileWriterSegments.get(pSegment);
+		} else {
+			final GenFileWriterSegment genFileWriterSegment = new GenFileWriterSegment();
+			this.mGenFileWriterSegments.put(pSegment, genFileWriterSegment);
+			return genFileWriterSegment;
+		}
+	}
+
 	// ===========================================================
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
@@ -48,43 +58,37 @@ public class GenFileWriter {
 	// ===========================================================
 
 	public void begin() {
-		this.mStringBuilder.setLength(0);
-		this.mLineBuilder.setLength(0);
+		this.mGenFileWriterSegments.clear();
 	}
 
-	public GenFileWriter append(final String pString) {
-		this.mLineBuilder.append(pString);
-		return this;
-	}
-	
-	public GenFileWriter space() {
-		this.mLineBuilder.append(' ');
-		return this;
+	public GenFileWriterSegment append(final E pSegment, final String pString) {
+		return this.getGenFileWriterSegment(pSegment).append(pString);
 	}
 
-	public GenFileWriter appendLine(final String pString) {
-		this.append(pString);
-		this.endLine();
-		return this;
+	public GenFileWriterSegment space(final E pSegment) {
+		return this.getGenFileWriterSegment(pSegment).space();
 	}
 
-	public GenFileWriter endLine() {
-		for(int i = 0; i < this.mIndent; i++) {
-			this.mStringBuilder.append('\t');
-		}
-		this.mStringBuilder.append(this.mLineBuilder);
-		this.mStringBuilder.append('\n');
-		this.mLineBuilder.setLength(0);
-		return this;
+	public GenFileWriterSegment appendLine(final E pSegment, final String pString) {
+		return this.getGenFileWriterSegment(pSegment).appendLine(pString);
+	}
+
+	public GenFileWriterSegment endLine(final E pSegment) {
+		return this.getGenFileWriterSegment(pSegment).endLine();
 	}
 
 	public void end() throws IOException {
 		final Writer writer = new FileWriter(this.mFile);
 
+		final StringBuilder stringBuilder = new StringBuilder();
+		for(final GenFileWriterSegment genFileWriterSegment : this.mGenFileWriterSegments.values()) {
+			stringBuilder.append(genFileWriterSegment.getContent());
+		}
+
 		if(this.mFormatter == null) {
-			writer.write(this.mStringBuilder.toString());
+			writer.write(stringBuilder.toString());
 		} else {
-			writer.write(this.mFormatter.format(this.mStringBuilder.toString()));
+			writer.write(this.mFormatter.format(stringBuilder.toString()));
 		}
 
 		writer.flush();
@@ -96,18 +100,92 @@ public class GenFileWriter {
 		}
 	}
 
-	public void incrementIndent() {
-		this.mIndent++;
+	public GenFileWriterSegment incrementIndent(final E pSegment) {
+		return this.getGenFileWriterSegment(pSegment).incrementIndent();
 	}
 
-	public void decrementIndent() {
-		if(this.mIndent == 0) {
-			throw new IllegalStateException();
-		}
-		this.mIndent--;
+	public GenFileWriterSegment decrementIndent(final E pSegment) {
+		return this.getGenFileWriterSegment(pSegment).decrementIndent();
 	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
+
+	public static class GenFileWriterSegment {
+		// ===========================================================
+		// Constants
+		// ===========================================================
+
+		// ===========================================================
+		// Fields
+		// ===========================================================
+
+		private int mIndent;
+		private StringBuilder mSegmentStringBuilder = new StringBuilder();
+		private StringBuilder mLineStringBuilder = new StringBuilder();
+
+		// ===========================================================
+		// Constructors
+		// ===========================================================
+
+		// ===========================================================
+		// Getter & Setter
+		// ===========================================================
+
+		public String getContent() {
+			return this.mSegmentStringBuilder.toString();
+		}
+
+		// ===========================================================
+		// Methods for/from SuperClass/Interfaces
+		// ===========================================================
+
+		// ===========================================================
+		// Methods
+		// ===========================================================
+
+		public GenFileWriterSegment incrementIndent() {
+			this.mIndent++;
+			return this;
+		}
+
+		public GenFileWriterSegment decrementIndent() {
+			if(this.mIndent == 0) {
+				throw new IllegalStateException();
+			}
+			this.mIndent--;
+			return this;
+		}
+
+		public GenFileWriterSegment space() {
+			this.mLineStringBuilder.append(' ');
+			return this;
+		}
+
+		public GenFileWriterSegment append(final String pString) {
+			this.mLineStringBuilder.append(pString);
+			return this;
+		}
+
+		public GenFileWriterSegment appendLine(final String pString) {
+			this.append(pString);
+			this.endLine();
+			return this;
+		}
+
+		public GenFileWriterSegment endLine() {
+			for(int i = 0; i < this.mIndent; i++) {
+				this.mSegmentStringBuilder.append('\t');
+			}
+			this.mSegmentStringBuilder.append(this.mLineStringBuilder);
+			this.mSegmentStringBuilder.append('\n');
+			this.mLineStringBuilder.setLength(0);
+			return this;
+		}
+
+		// ===========================================================
+		// Inner and Anonymous Classes
+		// ===========================================================
+	}
 }

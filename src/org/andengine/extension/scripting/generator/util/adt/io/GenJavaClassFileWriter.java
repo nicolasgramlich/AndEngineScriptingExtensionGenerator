@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.JavaFormatter;
+import org.andengine.extension.scripting.generator.util.adt.io.GenFileWriter.GenFileWriterSegment;
 
 /**
  * (c) Zynga 2012
@@ -21,14 +22,14 @@ public class GenJavaClassFileWriter {
 	// Fields
 	// ===========================================================
 
-	private final GenFileWriter mGenJavaClassSourceFileWriter;
+	private final GenFileWriter<GenJavaClassSourceFileSegment> mGenJavaClassSourceFileWriter;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
 	public GenJavaClassFileWriter(final File pGenJavaRoot, final Class<?> pClass, final String pGenJavaClassSuffix, final JavaFormatter pJavaFormatter) {
-		this.mGenJavaClassSourceFileWriter = new GenFileWriter(Util.getGenJavaClassSourceFile(pGenJavaRoot, pClass, pGenJavaClassSuffix), pJavaFormatter);
+		this.mGenJavaClassSourceFileWriter = new GenFileWriter<GenJavaClassSourceFileSegment>(Util.getGenJavaClassSourceFile(pGenJavaRoot, pClass, pGenJavaClassSuffix), pJavaFormatter);
 	}
 
 	// ===========================================================
@@ -47,34 +48,76 @@ public class GenJavaClassFileWriter {
 		this.mGenJavaClassSourceFileWriter.begin();
 	}
 
-	public GenFileWriter appendSource(final String pString) {
-		this.mGenJavaClassSourceFileWriter.append(pString);
-		return this.mGenJavaClassSourceFileWriter;
-	}
-
-	public GenFileWriter appendSourceLine(final String pString) {
-		this.mGenJavaClassSourceFileWriter.appendLine(pString);
-		return this.mGenJavaClassSourceFileWriter;
-	}
-	
-	public GenFileWriter endSourceLine() {
-		this.mGenJavaClassSourceFileWriter.endLine();
-		return this.mGenJavaClassSourceFileWriter;
-	}
-
 	public void end() throws IOException {
 		this.mGenJavaClassSourceFileWriter.end();
 	}
 
-	public void incrementSourceIndent() {
-		this.mGenJavaClassSourceFileWriter.incrementIndent();
+	public GenFileWriterSegment append(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment, final String pString) {
+		return this.mGenJavaClassSourceFileWriter.append(pGenJavaClassSourceFileSegment, pString);
 	}
 
-	public void decrementSourceIndent() {
-		this.mGenJavaClassSourceFileWriter.decrementIndent();
+	public GenFileWriterSegment appendLine(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment, final String pString) {
+		return this.mGenJavaClassSourceFileWriter.appendLine(pGenJavaClassSourceFileSegment, pString);
+	}
+
+	public GenFileWriterSegment endLine(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.endLine(pGenJavaClassSourceFileSegment);
+	}
+
+	public GenFileWriterSegment incrementIndent(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.incrementIndent(pGenJavaClassSourceFileSegment);
+	}
+
+	public GenFileWriterSegment decrementIndent(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.decrementIndent(pGenJavaClassSourceFileSegment);
 	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
+
+	public static enum GenJavaClassSourceFileSegment {
+		// ===========================================================
+		// Elements
+		// ===========================================================
+
+		PACKAGE,
+		IMPORTS,
+		CLASS_START,
+		STATIC_METHODS,
+		CONSTANTS,
+		FIELDS,
+		CONSTRUCTORS,
+		GETTERS_SETTERS,
+		METHODS,
+		CLASS_END;
+
+		// ===========================================================
+		// Constants
+		// ===========================================================
+
+		// ===========================================================
+		// Fields
+		// ===========================================================
+
+		// ===========================================================
+		// Constructors
+		// ===========================================================
+
+		// ===========================================================
+		// Getter & Setter
+		// ===========================================================
+
+		// ===========================================================
+		// Methods for/from SuperClass/Interfaces
+		// ===========================================================
+
+		// ===========================================================
+		// Methods
+		// ===========================================================
+
+		// ===========================================================
+		// Inner and Anonymous Classes
+		// ===========================================================
+	}
 }
