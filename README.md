@@ -10,6 +10,11 @@
 -gen-java-formatter jalopy
 -gen-java-class-suffix ProxyX
 -gen-cpp-class-suffix Proxy
+-gen-method-exclude notify
+-gen-method-exclude notifyAll
+-gen-method-exclude wait
+-gen-method-exclude equals
+-gen-method-exclude toString
 -gen-method-exclude onUpdate
 -gen-method-exclude onManagedUpdate
 -gen-method-exclude onDraw
