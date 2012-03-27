@@ -146,13 +146,23 @@ public class Generator {
 				final Class<?> clazz = classLoader.loadClass(className);
 
 				System.out.print("Generating: '" + className + "' ...");
-				this.generateClassCode(clazz);
+				if(clazz.isInterface()) {
+					this.generateInterfaceCode(clazz);
+				} else if(Modifier.isAbstract(clazz.getModifiers())) {
+					this.generateClassCode(clazz);
+				} else {
+					this.generateClassCode(clazz);
+				}
 				System.out.println(" done!");
 			} catch (final Throwable t) {
 				t.printStackTrace();
 				System.out.println(" ERROR!");
 			}
 		}
+	}
+
+	private void generateInterfaceCode(final Class<?> pClazz) {
+
 	}
 
 	private void generateClassCode(final Class<?> pClass) throws IOException {
@@ -220,7 +230,15 @@ public class Generator {
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
 
 				/* Class. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").end(); // TODO extend 'Superclass' instead of Wrapper
+				// TODO extend 'Superclass' instead of Wrapper
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ");
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append("Wrapper");
+				final Class<?>[] interfaces = pClass.getInterfaces();
+				for(final Class<?> interfaze : interfaces) {
+					this.generateIncludes(interfaces, pGenCppClassFileWriter);
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ",").space().append("public").space().append(Util.getGenCppClassName(interfaze, this.mGenCppClassSuffix));
+				}
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
 
 				/* Methods. */
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
@@ -305,7 +323,7 @@ public class Generator {
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "}").end();
 
 				/* Add imports. */
-				this.generateImports(pConstructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+				this.generateParameterImportsAndIncludes(pConstructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 			}
 
 			/* Generate native constructor. */
@@ -329,13 +347,13 @@ public class Generator {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
-					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("set")) {
-					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("on")) {
-					this.generateImports(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
 					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
@@ -526,23 +544,37 @@ public class Generator {
 		}
 	}
 
-	private void generateImports(final AccessibleObject pAccessibleObject, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateParameterImportsAndIncludes(final AccessibleObject pAccessibleObject, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		if(pAccessibleObject instanceof Constructor<?>) {
-			this.generateImports(((Constructor<?>)pAccessibleObject).getParameterTypes(), pGenJavaClassFileWriter, pGenCppClassFileWriter);
+			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
+			final Class<?>[] parameterTypes = constructor.getParameterTypes();
+
+			this.generateImports(parameterTypes, pGenJavaClassFileWriter);
+			this.generateIncludes(constructor.getParameterTypes(), pGenCppClassFileWriter);
 		} else if(pAccessibleObject instanceof Method) {
-			this.generateImports(((Method)pAccessibleObject).getParameterTypes(), pGenJavaClassFileWriter, pGenCppClassFileWriter);
+			final Method method = (Method)pAccessibleObject;
+			final Class<?>[] parameterTypes = method.getParameterTypes();
+
+			this.generateImports(parameterTypes, pGenJavaClassFileWriter);
+			this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	private void generateImports(final Class<?>[] pTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		for(final Class<?> parameterType : pTypes) {
-			if(!Util.isPrimitiveParameter(parameterType)) {
-				final String genJavaImportClassName = Util.getGenJavaClassImport(parameterType);
+	private void generateImports(final Class<?>[] pTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter) {
+		for(final Class<?> type : pTypes) {
+			if(!Util.isPrimitiveParameter(type)) {
+				final String genJavaImportClassName = Util.getGenJavaClassImport(type);
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, genJavaImportClassName).end();
+			}
+		}
+	}
 
-				final String genCppIncludeClassName = Util.getGenCppClassInclude(parameterType, this.mGenCppClassSuffix);
+	private void generateIncludes(final Class<?>[] pTypes, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		for(final Class<?> type : pTypes) {
+			if(!Util.isPrimitiveParameter(type)) {
+				final String genCppIncludeClassName = Util.getGenCppClassInclude(type, this.mGenCppClassSuffix);
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, genCppIncludeClassName).end();
 			}
 		}
