@@ -240,7 +240,8 @@ public class Generator {
 			{
 				/* Includes. */
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, "#include <cstdlib>").end();
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, "#include \"").append(Util.getGenCppClassHeaderImport(pClass, this.mGenCppClassSuffix)).append("\"").end();
+				final String genCppClassInclude = Util.getGenCppClassInclude(pClass, this.mGenCppClassSuffix);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, genCppClassInclude).end();
 
 				/* Statics. */
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix)).append(";").end();
@@ -314,7 +315,7 @@ public class Generator {
 
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppClassName);
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, "(");
-				final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pConstructor);
+				final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pConstructor, this.mGenCppClassSuffix);
 				if(genCppMethodHeaderParamatersAsString != null) {
 					pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
 				}
@@ -428,9 +429,9 @@ public class Generator {
 				{
 					final String jniExportMethodHeaderParamatersAsString = Util.getJNIExportMethodHeaderParamatersAsString(pMethod);
 					final String jniExportMethodParamatersAsString = Util.getJNIExportMethodParamatersAsString(pMethod);
-					final String cppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pMethod);
-					final String cppMethodParamatersAsString = Util.getGenCppMethodParamatersAsString(pMethod);
-					final String cppMethodCallParamatersAsString = Util.getGenCppMethodCallParamatersAsString(pMethod);
+					final String cppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pMethod, this.mGenCppClassSuffix);
+					final String cppMethodParamatersAsString = Util.getGenCppMethodParamatersAsString(pMethod, this.mGenCppClassSuffix);
+					final String cppMethodCallParamatersAsString = Util.getGenCppMethodCallParamatersAsString(pMethod, this.mGenCppClassSuffix);
 
 					/* Header. */
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT jboolean JNICALL").space().append(jniExportMethodName);
@@ -535,11 +536,14 @@ public class Generator {
 		}
 	}
 
-	private void generateImports(final Class<?>[] pParameterTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		for(final Class<?> parameterType : pParameterTypes) {
+	private void generateImports(final Class<?>[] pTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		for(final Class<?> parameterType : pTypes) {
 			if(!Util.isPrimitiveParameter(parameterType)) {
-				final String parameterTypeName = Util.getClassNameForImport(parameterType);
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(parameterTypeName).append(";").end();
+				final String genJavaImportClassName = Util.getGenJavaClassImport(parameterType);
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, genJavaImportClassName).end();
+
+				final String genCppIncludeClassName = Util.getGenCppClassInclude(parameterType, this.mGenCppClassSuffix);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, genCppIncludeClassName).end();
 			}
 		}
 	}
