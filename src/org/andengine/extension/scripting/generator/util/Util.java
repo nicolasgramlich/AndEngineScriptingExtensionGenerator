@@ -347,6 +347,8 @@ public class Util {
 				return "jfloatArray";
 			} else if(componentType == Double.TYPE) {
 				return "jdoubleArray";
+			} else if(componentType == String.class) {
+				return "jstringArray";
 			} else if(componentType == Object.class) {
 				return "jobjectArray";
 			} else {
@@ -371,6 +373,8 @@ public class Util {
 				return "jfloat";
 			} else if(pParameterType == Double.TYPE) {
 				return "jdouble";
+			} else if(pParameterType == String.class) {
+				return "jstring";
 			} else if(pParameterType == Object.class) {
 				return "jobject";
 			} else {
@@ -402,6 +406,8 @@ public class Util {
 			} else if(pType == Float.TYPE) {
 				return true;
 			} else if(pType == Double.TYPE) {
+				return true;
+			} else if(pType == String.class) {
 				return true;
 			} else if(pType == Object.class) {
 				return true;
