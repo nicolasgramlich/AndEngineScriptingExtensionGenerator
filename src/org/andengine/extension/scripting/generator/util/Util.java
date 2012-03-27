@@ -76,7 +76,7 @@ public class Util {
 	public static String getGenCppClassName(final Class<?> pClass, final String pGenCppClassSuffix) {
 		return pClass.getSimpleName() + pGenCppClassSuffix;
 	}
-	
+
 	public static String getGenCppStaticClassMemberName(final Class<?> pClass, final String pGenCppClassSuffix) {
 		return "s" + pClass.getSimpleName() + pGenCppClassSuffix + "Class";
 	}
@@ -197,20 +197,20 @@ public class Util {
 
 	public static String getGenCppMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
 		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
-		
+
 		return Util.getGenCppMethodHeaderParamatersAsString(parameterTypes);
 	}
-	
+
 	public static String getGenCppMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
-		
+
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
 			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType);
-			
+
 			if(i == 0) {
 				stringBuilder.append("");
 			} else {
@@ -218,7 +218,62 @@ public class Util {
 			}
 			stringBuilder.append(parameterTypeName);
 		}
-		
+
+		return stringBuilder.toString();
+	}
+
+	public static String getGenCppMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+
+		return Util.getGenCppMethodParamatersAsString(parameterTypes, parameterNames);
+	}
+
+	public static String getGenCppMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+		if(pParameterTypes.length == 0) {
+			return null;
+		}
+		final StringBuilder stringBuilder = new StringBuilder();
+
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType);
+			final String parameterName = pParameterNames[i];
+
+			if(i == 0) {
+				stringBuilder.append("");
+			} else {
+				stringBuilder.append(", ");
+			}
+			stringBuilder.append(parameterTypeName).append(' ').append(parameterName);
+		}
+
+		return stringBuilder.toString();
+	}
+
+	public static String getGenCppMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+
+		return Util.getGenCppMethodCallParamatersAsString(parameterNames);
+	}
+
+	public static String getGenCppMethodCallParamatersAsString(final String[] pParameterNames) {
+		if(pParameterNames.length == 0) {
+			return null;
+		}
+		final StringBuilder stringBuilder = new StringBuilder();
+
+		for(int i = 0; i < pParameterNames.length; i++) {
+			final String parameterName = pParameterNames[i];
+
+			if(i == 0) {
+				stringBuilder.append("");
+			} else {
+				stringBuilder.append(", ");
+			}
+			stringBuilder.append(parameterName);
+		}
+
 		return stringBuilder.toString();
 	}
 
