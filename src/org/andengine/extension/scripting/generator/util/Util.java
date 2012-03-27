@@ -242,7 +242,7 @@ public class Util {
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
 			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType, pGenCppClassSuffix);
-			final String parameterName = pParameterNames[i];
+			final String parameterName = pParameterNames[i] + pGenCppClassSuffix;
 
 			if(i == 0) {
 				stringBuilder.append("");
@@ -324,34 +324,63 @@ public class Util {
 		return parameterTypeName;
 	}
 
-	public static String getGenCppParameterTypeName(final Class<?> parameterType, final String pGenCppClassSuffix) {
-		final String parameterTypeName;
-		if(parameterType == Boolean.TYPE) {
-			parameterTypeName = "jboolean";
-		} else if(parameterType == Byte.TYPE) {
-			parameterTypeName = "jbyte";
-		} else if(parameterType == Character.TYPE) {
-			parameterTypeName = "jchar";
-		} else if(parameterType == Short.TYPE) {
-			parameterTypeName = "jshort";
-		} else if(parameterType == Integer.TYPE) {
-			parameterTypeName = "jint";
-		} else if(parameterType == Long.TYPE) {
-			parameterTypeName = "jlong";
-		} else if(parameterType == Float.TYPE) {
-			parameterTypeName = "jfloat";
-		} else if(parameterType == Double.TYPE) {
-			parameterTypeName = "jdouble";
+	public static String getGenCppParameterTypeName(final Class<?> pParameterType, final String pGenCppClassSuffix) {
+		if(pParameterType.isArray()) {
+			final Class<?> componentType = pParameterType.getComponentType();
+			if(componentType == Boolean.TYPE) {
+				return "jbooleanArray";
+			} else if(componentType == Byte.TYPE) {
+				return "jbyteArray";
+			} else if(componentType == Character.TYPE) {
+				return "jcharArray";
+			} else if(componentType == Short.TYPE) {
+				return "jshortArray";
+			} else if(componentType == Integer.TYPE) {
+				return "jintArray";
+			} else if(componentType == Long.TYPE) {
+				return "jlongArray";
+			} else if(componentType == Float.TYPE) {
+				return "jfloatArray";
+			} else if(componentType == Double.TYPE) {
+				return "jdoubleArray";
+			} else if(componentType == Object.class) {
+				return "jobjectArray";
+			} else {
+				throw new IllegalArgumentException();
+			}
 		} else {
-			// TODO Add import, when name != simplename.
-//			parameterTypeName = parameterType.getName();
-			parameterTypeName = parameterType.getSimpleName() + pGenCppClassSuffix + "*";
+			if(pParameterType == Void.TYPE) {
+				return "void";
+			} else if(pParameterType == Boolean.TYPE) {
+				return "jboolean";
+			} else if(pParameterType == Byte.TYPE) {
+				return "jbyte";
+			} else if(pParameterType == Character.TYPE) {
+				return "jchar";
+			} else if(pParameterType == Short.TYPE) {
+				return "jshort";
+			} else if(pParameterType == Integer.TYPE) {
+				return "jint";
+			} else if(pParameterType == Long.TYPE) {
+				return "jlong";
+			} else if(pParameterType == Float.TYPE) {
+				return "jfloat";
+			} else if(pParameterType == Double.TYPE) {
+				return "jdouble";
+			} else if(pParameterType == Object.class) {
+				return "jobject";
+			} else {
+				// TODO Add import, when name != simplename.
+	//			return parameterType.getName();
+				return pParameterType.getSimpleName() + pGenCppClassSuffix + "*";
+			}
 		}
-		return parameterTypeName;
 	}
 
 	public static boolean isPrimitiveParameter(final Class<?> parameterType) {
-		if(parameterType == Boolean.TYPE) {
+		if(parameterType == Void.TYPE) {
+			return true;
+		} else if(parameterType == Boolean.TYPE) {
 			return true;
 		} else if(parameterType == Byte.TYPE) {
 			return true;

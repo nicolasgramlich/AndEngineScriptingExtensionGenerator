@@ -211,9 +211,33 @@ public class Generator {
 	}
 
 	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		
+		for(final Method method : pClass.getMethods()) {
+			if(!this.isGenMethodExcluded(method)) {
+				final String methodName = method.getName();
+				if(methodName .startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has") || methodName.startsWith("set") || methodName.startsWith("on")) {
+					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
+					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
+				} else {
+//					System.err.println("Skipping interface method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+				}
+			}
+		}
 	}
-	
+
+	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		final String returnType = Util.getGenCppParameterTypeName(pMethod.getReturnType(), this.mGenCppClassSuffix);
+		final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pMethod, this.mGenCppClassSuffix);
+		final String methodName = pMethod.getName();
+
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnType).space().append(methodName);
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
+		if(genCppMethodHeaderParamatersAsString != null) {
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppMethodHeaderParamatersAsString);
+		}
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ")");
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, " = 0;").end();
+	}
+
 	private void generateInterfaceFooter(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		/* Generate native footer. */
 		{
@@ -425,7 +449,7 @@ public class Generator {
 					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
-//					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+//					System.err.println("Skipping class method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
 				}
 			}
 		}
@@ -625,6 +649,21 @@ public class Generator {
 			final Class<?>[] parameterTypes = method.getParameterTypes();
 
 			this.generateImports(parameterTypes, pGenJavaClassFileWriter);
+			this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private void generateIncludes(final AccessibleObject pAccessibleObject, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		if(pAccessibleObject instanceof Constructor<?>) {
+			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
+			
+			this.generateIncludes(constructor.getParameterTypes(), pGenCppClassFileWriter);
+		} else if(pAccessibleObject instanceof Method) {
+			final Method method = (Method)pAccessibleObject;
+			final Class<?>[] parameterTypes = method.getParameterTypes();
+			
 			this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
 		} else {
 			throw new IllegalArgumentException();

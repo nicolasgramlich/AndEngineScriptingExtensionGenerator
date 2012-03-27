@@ -7,6 +7,8 @@ import java.io.Writer;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.andengine.extension.scripting.generator.util.adt.FormatterException;
+
 /**
  * (c) Zynga 2012
  *
@@ -88,10 +90,16 @@ public class GenFileWriter<E extends Enum<?>> {
 			}
 		}
 
+		final String source = stringBuilder.toString();
 		if(this.mFormatter == null) {
-			writer.write(stringBuilder.toString());
+			writer.write(source);
 		} else {
-			writer.write(this.mFormatter.format(stringBuilder.toString()));
+			try {
+				writer.write(this.mFormatter.format(source));
+			} catch (FormatterException e) {
+				e.printStackTrace();
+				writer.write(source);
+			}
 		}
 
 		writer.flush();

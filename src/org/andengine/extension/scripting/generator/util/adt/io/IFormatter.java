@@ -1,5 +1,7 @@
 package org.andengine.extension.scripting.generator.util.adt.io;
 
+import org.andengine.extension.scripting.generator.util.adt.FormatterException;
+
 /**
  * (c) Zynga 2012
  *
@@ -15,5 +17,5 @@ public interface IFormatter {
 	// Methods
 	// ===========================================================
 
-	public abstract String format(final String pString);
+	public String format(final String pString) throws FormatterException;
 }
