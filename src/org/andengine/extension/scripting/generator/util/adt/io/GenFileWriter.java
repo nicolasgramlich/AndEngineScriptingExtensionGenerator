@@ -78,8 +78,10 @@ public class GenFileWriter<E extends Enum<?>> {
 
 		final StringBuilder stringBuilder = new StringBuilder();
 		for(final GenFileWriterSegment genFileWriterSegment : this.mGenFileWriterSegments.values()) {
-			genFileWriterSegment.end();
-			stringBuilder.append(genFileWriterSegment.getContent());
+			if(genFileWriterSegment.hasContent()) {
+				genFileWriterSegment.end();
+				stringBuilder.append(genFileWriterSegment.getContent());
+			}
 		}
 
 		if(this.mFormatter == null) {
@@ -132,6 +134,10 @@ public class GenFileWriter<E extends Enum<?>> {
 
 		public String getContent() {
 			return this.mSegmentStringBuilder.toString();
+		}
+
+		public boolean hasContent() {
+			return this.mSegmentStringBuilder.length() > 0;
 		}
 
 		// ===========================================================
