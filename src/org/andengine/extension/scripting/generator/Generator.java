@@ -223,16 +223,21 @@ public class Generator {
 				/* Imports. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/ScriptingEnvironment.h\"").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end(); // TODO Import 'Superclass.h' instead of Wrapper.h
 
 				/* Externs. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
 
 				/* Class. */
-				// TODO extend 'Superclass' instead of Wrapper
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ");
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append("Wrapper");
+				if(Object.class.equals(pClass.getSuperclass())) {
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end();
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append("Wrapper");
+				} else {
+					final Class<?> superclass = pClass.getSuperclass();
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, Util.getGenCppClassInclude(superclass, this.mGenCppClassSuffix)).end();
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append(Util.getGenCppClassName(superclass, this.mGenCppClassSuffix));
+				}
 				final Class<?>[] interfaces = pClass.getInterfaces();
 				for(final Class<?> interfaze : interfaces) {
 					this.generateIncludes(interfaces, pGenCppClassFileWriter);
