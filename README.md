@@ -18,7 +18,14 @@
 -gen-method-exclude onUpdate
 -gen-method-exclude onManagedUpdate
 -gen-method-exclude onDraw
+-class org.andengine.engine.handler.IUpdateHandler
+-class org.andengine.engine.handler.IDrawHandler
+-class org.andengine.util.IDisposable
+-class org.andengine.util.IMatcher
 -class org.andengine.entity.Entity
+-class org.andengine.entity.IEntity
+-class org.andengine.entity.IEntityMatcher
 -class org.andengine.entity.primitive.Rectangle
 -class org.andengine.entity.sprite.Sprite
+-class org.andengine.entity.shape.Shape
 ```
