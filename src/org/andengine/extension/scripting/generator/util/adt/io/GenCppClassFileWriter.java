@@ -30,7 +30,15 @@ public class GenCppClassFileWriter {
 	// ===========================================================
 
 	public GenCppClassFileWriter(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix, final CppFormatter pCppFormatter) {
-		this.mGenCppClassSourceFileWriter = new GenFileWriter<GenCppClassSourceFileSegment>(Util.getGenCppClassSourceFile(pGenCppRoot, pClass, pGenCppClassSuffix), pCppFormatter);
+		this(pGenCppRoot, pClass, pGenCppClassSuffix, pCppFormatter, false);
+	}
+
+	public GenCppClassFileWriter(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix, final CppFormatter pCppFormatter, final boolean pHeaderFileOnly) {
+		if(pHeaderFileOnly) {
+			this.mGenCppClassSourceFileWriter = null;
+		} else {
+			this.mGenCppClassSourceFileWriter = new GenFileWriter<GenCppClassSourceFileSegment>(Util.getGenCppClassSourceFile(pGenCppRoot, pClass, pGenCppClassSuffix), pCppFormatter);
+		}
 		this.mGenCppClassHeaderFileWriter = new GenFileWriter<GenCppClassHeaderFileSegment>(Util.getGenCppClassHeaderFile(pGenCppRoot, pClass, pGenCppClassSuffix), pCppFormatter);
 	}
 
@@ -47,12 +55,16 @@ public class GenCppClassFileWriter {
 	// ===========================================================
 
 	public void begin() throws IOException {
-		this.mGenCppClassSourceFileWriter.begin();
+		if(this.mGenCppClassSourceFileWriter != null) {
+			this.mGenCppClassSourceFileWriter.begin();
+		}
 		this.mGenCppClassHeaderFileWriter.begin();
 	}
 
 	public void end() throws IOException {
-		this.mGenCppClassSourceFileWriter.end();
+		if(this.mGenCppClassSourceFileWriter != null) {
+			this.mGenCppClassSourceFileWriter.end();
+		}
 		this.mGenCppClassHeaderFileWriter.end();
 	}
 

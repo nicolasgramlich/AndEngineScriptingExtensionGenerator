@@ -149,7 +149,7 @@ public class Generator {
 				if(clazz.isInterface()) {
 					this.generateInterfaceCode(clazz);
 				} else if(Modifier.isAbstract(clazz.getModifiers())) {
-					this.generateClassCode(clazz);
+					this.generateClassCode(clazz); // TODO Actually handle this differently?
 				} else {
 					this.generateClassCode(clazz);
 				}
@@ -161,8 +161,66 @@ public class Generator {
 		}
 	}
 
-	private void generateInterfaceCode(final Class<?> pClazz) {
+	private void generateInterfaceCode(final Class<?> pClass) throws IOException {
+		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mGenCppClassSuffix, this.mGenCppFormatter, true);
+		genCppClassFileWriter.begin();
 
+		this.generateInterfaceHeader(pClass, genCppClassFileWriter);
+		this.generateInterfaceMethods(pClass, genCppClassFileWriter);
+		this.generateInterfaceFooter(pClass, genCppClassFileWriter);
+
+		genCppClassFileWriter.end();
+	}
+	
+	private void generateInterfaceHeader(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+		/* Generate native header. */
+		{
+			/* Header. */
+			{
+				/* #ifdef. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
+
+				/* Imports. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
+
+				/* Class. */
+				final Class<?>[] interfaces = pClass.getInterfaces();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName);
+				this.generateIncludes(interfaces, pGenCppClassFileWriter);
+				if(interfaces.length > 0) {
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " : ");
+
+					for(int i = 0; i < interfaces.length; i++) {
+						if(i > 0) {
+							pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ", ");
+						}
+						final Class<?> interfaze = interfaces[i];
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append(Util.getGenCppClassName(interfaze, this.mGenCppClassSuffix));
+					}
+				}
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
+
+				/* Methods. */
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
+			}
+		}
+	}
+
+	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		
+	}
+	
+	private void generateInterfaceFooter(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		/* Generate native footer. */
+		{
+			/* Class. */
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "#endif").end();
+		}
 	}
 
 	private void generateClassCode(final Class<?> pClass) throws IOException {
@@ -230,17 +288,17 @@ public class Generator {
 
 				/* Class. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ");
-				if(Object.class.equals(pClass.getSuperclass())) {
+				final Class<?> superclass = pClass.getSuperclass();
+				if(Object.class.equals(superclass)) {
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end();
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append("Wrapper");
 				} else {
-					final Class<?> superclass = pClass.getSuperclass();
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, Util.getGenCppClassInclude(superclass, this.mGenCppClassSuffix)).end();
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append(Util.getGenCppClassName(superclass, this.mGenCppClassSuffix));
 				}
 				final Class<?>[] interfaces = pClass.getInterfaces();
+				this.generateIncludes(interfaces, pGenCppClassFileWriter);
 				for(final Class<?> interfaze : interfaces) {
-					this.generateIncludes(interfaces, pGenCppClassFileWriter);
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ",").space().append("public").space().append(Util.getGenCppClassName(interfaze, this.mGenCppClassSuffix));
 				}
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
@@ -274,15 +332,21 @@ public class Generator {
 
 	private void generateClassFooter(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		/* Generate Java footer. */
-		pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_END, "}").end();
+		{
+			/* Class. */
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_END, "}").end();
+		}
 
 		/* Generate native footer. */
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "#endif").end();
+		{
+			/* Externs. */
+			pGenCppClassFileWriter.decrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "}").end();
 
-		/* Externs. */
-		pGenCppClassFileWriter.decrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "}").end();
+			/* Class. */
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "#endif").end();
+		}
 	}
 
 	private void generateClassFields(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
@@ -361,7 +425,7 @@ public class Generator {
 					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
-					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+//					System.err.println("Skipping method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
 				}
 			}
 		}

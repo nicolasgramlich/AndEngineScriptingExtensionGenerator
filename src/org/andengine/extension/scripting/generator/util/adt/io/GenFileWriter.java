@@ -31,6 +31,10 @@ public class GenFileWriter<E extends Enum<?>> {
 	// ===========================================================
 
 	public GenFileWriter(final File pFile, final IFormatter pFormatter) {
+		final File directory = pFile.getParentFile();
+		if(!directory.exists()) {
+			directory.mkdirs();
+		}
 		this.mFile = pFile;
 		this.mFormatter = pFormatter;
 	}
