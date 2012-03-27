@@ -60,7 +60,11 @@ public class Util {
 	}
 
 	public static String getGenJavaClassImport(final Class<?> pClass) {
-		return "import " + pClass.getName().replace('$', '.') + ";";
+		if(pClass.isArray()) {
+			return Util.getGenJavaClassImport(pClass.getComponentType());
+		} else {
+			return "import " + pClass.getName().replace('$', '.') + ";";
+		}
 	}
 
 	public static String getVisibilityModifiersAsString(final AccessibleObject pAccessibleObject) {
@@ -377,29 +381,33 @@ public class Util {
 		}
 	}
 
-	public static boolean isPrimitiveParameter(final Class<?> parameterType) {
-		if(parameterType == Void.TYPE) {
-			return true;
-		} else if(parameterType == Boolean.TYPE) {
-			return true;
-		} else if(parameterType == Byte.TYPE) {
-			return true;
-		} else if(parameterType == Character.TYPE) {
-			return true;
-		} else if(parameterType == Short.TYPE) {
-			return true;
-		} else if(parameterType == Integer.TYPE) {
-			return true;
-		} else if(parameterType == Long.TYPE) {
-			return true;
-		} else if(parameterType == Float.TYPE) {
-			return true;
-		} else if(parameterType == Double.TYPE) {
-			return true;
-		} else if(parameterType == Object.class) {
-			return true;
+	public static boolean isPrimitiveType(final Class<?> pType) {
+		if(pType.isArray()) {
+			return Util.isPrimitiveType(pType.getComponentType());
 		} else {
-			return false;
+			if(pType == Void.TYPE) {
+				return true;
+			} else if(pType == Boolean.TYPE) {
+				return true;
+			} else if(pType == Byte.TYPE) {
+				return true;
+			} else if(pType == Character.TYPE) {
+				return true;
+			} else if(pType == Short.TYPE) {
+				return true;
+			} else if(pType == Integer.TYPE) {
+				return true;
+			} else if(pType == Long.TYPE) {
+				return true;
+			} else if(pType == Float.TYPE) {
+				return true;
+			} else if(pType == Double.TYPE) {
+				return true;
+			} else if(pType == Object.class) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 

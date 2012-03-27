@@ -214,9 +214,12 @@ public class Generator {
 		for(final Method method : pClass.getMethods()) {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
-				if(methodName .startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has") || methodName.startsWith("set") || methodName.startsWith("on")) {
-					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
+				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has") || methodName.startsWith("set")) {
+					this.generateIncludes(method, pGenCppClassFileWriter);
 					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
+				} else if(methodName.startsWith("on")) {
+					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
+					this.generateInterfaceCallback(pClass, method, pGenCppClassFileWriter);
 				} else {
 //					System.err.println("Skipping interface method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
 				}
@@ -224,7 +227,11 @@ public class Generator {
 		}
 	}
 
-	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceMethod(Class<?> pClass, Method pMethod, GenCppClassFileWriter pGenCppClassFileWriter) {
+		
+	}
+
+	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final String returnType = Util.getGenCppParameterTypeName(pMethod.getReturnType(), this.mGenCppClassSuffix);
 		final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pMethod, this.mGenCppClassSuffix);
 		final String methodName = pMethod.getName();
@@ -441,13 +448,13 @@ public class Generator {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
 					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-					this.generateGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateClassGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("set")) {
 					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-					this.generateSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateClassSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("on")) {
 					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-					this.generateCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateClassCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
 //					System.err.println("Skipping class method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
 				}
@@ -455,7 +462,7 @@ public class Generator {
 		}
 	}
 
-	private void generateCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		final String methodName = pMethod.getName();
@@ -484,13 +491,25 @@ public class Generator {
 					if(returnType == Void.TYPE) {
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "if(!this.").append(javaNativeMethodName);
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "(");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "this.mAddress"); // TODO Parameters
+						/* Parameters. */
+						{
+							pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "this.mAddress");
+							if(methodCallParamatersAsString != null) {
+								pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, ", ");
+								pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, methodCallParamatersAsString);
+							}
+						}
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, ")");
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, ") {").end();
 						pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.METHODS);
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "super.").append(methodName);
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "(");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, ""); // TODO Parameters
+						/* Parameters. */
+						{
+							if(methodCallParamatersAsString != null) {
+								pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, methodCallParamatersAsString);
+							}
+						}
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, ");").end();
 						pGenJavaClassFileWriter.decrementIndent(GenJavaClassSourceFileSegment.METHODS);
 						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "}").end();
@@ -592,13 +611,13 @@ public class Generator {
 		}
 	}
 
-	private void generateSetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassSetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		// TODO Generate code.
 	}
 
-	private void generateGetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassGetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		// TODO Support all types?
@@ -672,7 +691,7 @@ public class Generator {
 
 	private void generateImports(final Class<?>[] pTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter) {
 		for(final Class<?> type : pTypes) {
-			if(!Util.isPrimitiveParameter(type)) {
+			if(!Util.isPrimitiveType(type)) {
 				final String genJavaImportClassName = Util.getGenJavaClassImport(type);
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, genJavaImportClassName).end();
 			}
@@ -681,7 +700,7 @@ public class Generator {
 
 	private void generateIncludes(final Class<?>[] pTypes, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Class<?> type : pTypes) {
-			if(!Util.isPrimitiveParameter(type)) {
+			if(!Util.isPrimitiveType(type)) {
 				final String genCppIncludeClassName = Util.getGenCppClassInclude(type, this.mGenCppClassSuffix);
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, genCppIncludeClassName).end();
 			}
