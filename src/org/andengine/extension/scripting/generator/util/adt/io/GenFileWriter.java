@@ -171,12 +171,14 @@ public class GenFileWriter<E extends Enum<?>> {
 		}
 
 		public GenFileWriterSegment end() {
-			for(int i = 0; i < this.mIndent; i++) {
-				this.mSegmentStringBuilder.append('\t');
+			if(this.mLineStringBuilder.length() > 0) {
+				for(int i = 0; i < this.mIndent; i++) {
+					this.mSegmentStringBuilder.append('\t');
+				}
+				this.mSegmentStringBuilder.append(this.mLineStringBuilder);
+				this.mLineStringBuilder.setLength(0);
 			}
-			this.mSegmentStringBuilder.append(this.mLineStringBuilder);
 			this.mSegmentStringBuilder.append('\n');
-			this.mLineStringBuilder.setLength(0);
 			return this;
 		}
 
