@@ -177,7 +177,7 @@ public class Generator {
 		final String genJavaClassPackageName = Util.getGenJavaClassPackageName(pClass);
 		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
 
-		/* Generate Java boilerplate. */
+		/* Generate Java header. */
 		{
 			/* Package. */
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package").space().append(genJavaClassPackageName).append(";").end();
@@ -191,41 +191,13 @@ public class Generator {
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.GETTERS_SETTERS);
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.METHODS);
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.STATIC_METHODS);
-		}
 
-		/* Generate native boilerplate. */
-		{
-			/* #ifdef. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
-
-			/* Imports. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/ScriptingEnvironment.h\"").end();
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end(); // TODO Import 'Superclass.h' instead of Wrapper.h
-
-			/* Externs. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
-
-			/* Methods. */
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PROTECTED, "protected:").end();
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
-
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
-			pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
-		}
-
-		/* Generate Java header. */
-		{
 			/* Class. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public").space();
+			if(Modifier.isAbstract(pClass.getModifiers())) {
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "abstract").space();
+			}
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
 
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.STATIC_METHODS, "public static native void nativeInitClass();").end();
 		}
@@ -234,8 +206,34 @@ public class Generator {
 		{
 			/* Header. */
 			{
+				/* #ifdef. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
+
+				/* Imports. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/ScriptingEnvironment.h\"").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end(); // TODO Import 'Superclass.h' instead of Wrapper.h
+
+				/* Externs. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
+
 				/* Class. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").end(); // TODO extend 'Superclass' insteaf of Wra
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ").append("public").space().append("Wrapper").space().append("{").end(); // TODO extend 'Superclass' instead of Wrapper
+
+				/* Methods. */
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
+
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PROTECTED, "protected:").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
+
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
 			}
 
 			/* Source. */
