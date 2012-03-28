@@ -113,8 +113,7 @@ public class GenCppClassFileWriter {
 		STATICS,
 		CLASS_INIT,
 		JNI_EXPORTS,
-		METHODS_PROTECTED,
-		METHODS_PUBLIC;
+		METHODS;
 
 		// ===========================================================
 		// Constants

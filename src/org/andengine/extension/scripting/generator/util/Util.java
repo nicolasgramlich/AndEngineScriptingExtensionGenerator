@@ -246,7 +246,12 @@ public class Util {
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
 			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType, pGenCppClassSuffix);
-			final String parameterName = pParameterNames[i] + pGenCppClassSuffix;
+			final String parameterName;
+			if(Util.isPrimitiveType(parameterType)) {
+				parameterName = pParameterNames[i];
+			} else {
+				parameterName = pParameterNames[i] + pGenCppClassSuffix;
+			}
 
 			if(i == 0) {
 				stringBuilder.append("");
@@ -260,19 +265,26 @@ public class Util {
 	}
 
 	public static String getGenCppMethodCallParamatersAsString(final AccessibleObject pAccessibleObject, final String pGenCppClassSuffix) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
 		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
 
-		return Util.getGenCppMethodCallParamatersAsString(parameterNames, pGenCppClassSuffix);
+		return Util.getGenCppMethodCallParamatersAsString(parameterTypes, parameterNames, pGenCppClassSuffix);
 	}
 
-	public static String getGenCppMethodCallParamatersAsString(final String[] pParameterNames, final String pGenCppClassSuffix) {
-		if(pParameterNames.length == 0) {
+	public static String getGenCppMethodCallParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames, final String pGenCppClassSuffix) {
+		if(pParameterTypes.length == 0) {
 			return null;
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
 
-		for(int i = 0; i < pParameterNames.length; i++) {
-			final String parameterName = pParameterNames[i] + pGenCppClassSuffix;
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterName;
+			if(Util.isPrimitiveType(parameterType)) {
+				parameterName = pParameterNames[i];
+			} else {
+				parameterName = Util.getGenCppLocalVariableParameterName(pParameterNames[i], pGenCppClassSuffix);
+			}
 
 			if(i == 0) {
 				stringBuilder.append("");
@@ -283,6 +295,10 @@ public class Util {
 		}
 
 		return stringBuilder.toString();
+	}
+
+	public static String getGenCppLocalVariableParameterName(final String pParameterName, final String pGenCppClassSuffix) {
+		return Util.uncapitalizeFirstCharacter((pParameterName + pGenCppClassSuffix).substring(1));
 	}
 
 	public static String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {

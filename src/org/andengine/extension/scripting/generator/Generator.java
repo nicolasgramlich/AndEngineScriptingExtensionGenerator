@@ -148,8 +148,8 @@ public class Generator {
 				System.out.print("Generating: '" + className + "' ...");
 				if(clazz.isInterface()) {
 					this.generateInterfaceCode(clazz);
-				} else if(Modifier.isAbstract(clazz.getModifiers())) {
-					this.generateClassCode(clazz); // TODO Actually handle this differently?
+				} else if(clazz.isEnum()) {
+					this.generateEnumCode(clazz);
 				} else {
 					this.generateClassCode(clazz);
 				}
@@ -159,6 +159,10 @@ public class Generator {
 				System.out.println(" ERROR!");
 			}
 		}
+	}
+
+	private void generateEnumCode(final Class<?> pClazz) {
+		
 	}
 
 	private void generateInterfaceCode(final Class<?> pClass) throws IOException {
@@ -232,11 +236,17 @@ public class Generator {
 	}
 
 	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		final String returnType = Util.getGenCppParameterTypeName(pMethod.getReturnType(), this.mGenCppClassSuffix);
 		final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pMethod, this.mGenCppClassSuffix);
 		final String methodName = pMethod.getName();
 
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnType).space().append(methodName);
+		final String returnTypeName;
+		if(pMethod.getReturnType() == Void.TYPE) {
+			returnTypeName = Util.getGenCppParameterTypeName(Boolean.TYPE, this.mGenCppClassSuffix);
+		} else {
+			returnTypeName = Util.getGenCppParameterTypeName(pMethod.getReturnType(), this.mGenCppClassSuffix);
+		}
+		
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
 		if(genCppMethodHeaderParamatersAsString != null) {
 			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppMethodHeaderParamatersAsString);
@@ -262,9 +272,11 @@ public class Generator {
 		genCppClassFileWriter.begin();
 
 		this.generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+//		if(!Modifier.isAbstract(pClass.getModifiers())) {
+	 		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+			this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+			this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+//		}
 		this.generateClassFooter(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 
 		genJavaClassFileWriter.end();
@@ -346,6 +358,9 @@ public class Generator {
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
+
+				/* Wrapper-Constructor */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("(jobject);").end();
 			}
 
 			/* Source. */
@@ -357,6 +372,13 @@ public class Generator {
 
 				/* Statics. */
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix)).append(";").end();
+
+				/* Wrapper-Constructor */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("(jobject p").append(genJavaClassName).append(") {").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = p").append(genJavaClassName).append(";").end();
+				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
 			}
 		}
 	}
@@ -447,13 +469,10 @@ public class Generator {
 			if(!this.isGenMethodExcluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
-					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateClassGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("set")) {
-					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateClassSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else if(methodName.startsWith("on")) {
-					this.generateParameterImportsAndIncludes(method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 					this.generateClassCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
 //					System.err.println("Skipping class method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
@@ -468,6 +487,11 @@ public class Generator {
 		final String methodName = pMethod.getName();
 		if((returnType == Boolean.TYPE) || (returnType == Void.TYPE)) {
 			if(Modifier.isPublic(pMethod.getModifiers())) { // TODO Is this check correct?
+				this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+
+				final String[] parameterNames = Util.getParameterNames(pMethod);
+				final Class<?>[] parameterTypes = Util.getParameterTypes(pMethod);
+
 				/* Generate Java side of the callback. */
 				final String javaNativeMethodName = Util.getJavaNativeMethodName(pMethod);
 				final String jniExportMethodName = Util.getJNIExportMethodName(pMethod, this.mGenJavaClassSuffix);
@@ -564,44 +588,76 @@ public class Generator {
 					final String cppMethodCallParamatersAsString = Util.getGenCppMethodCallParamatersAsString(pMethod, this.mGenCppClassSuffix);
 
 					/* Header. */
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT jboolean JNICALL").space().append(jniExportMethodName);
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "(");
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, jniExportMethodHeaderParamatersAsString);
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, ");").end();
+					{
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT jboolean JNICALL").space().append(jniExportMethodName);
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "(");
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, jniExportMethodHeaderParamatersAsString);
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, ");").end();
 
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "bool").space().append(methodName);
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
-					if(cppMethodHeaderParamatersAsString != null) {
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, cppMethodHeaderParamatersAsString);
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "jboolean").space().append(methodName);
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
+						if(cppMethodHeaderParamatersAsString != null) {
+							pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, cppMethodHeaderParamatersAsString);
+						}
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ");").end();
 					}
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ");").end();
 
 					/* Source. */
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "JNIEXPORT jboolean JNICALL").space().append(jniExportMethodName);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, jniExportMethodParamatersAsString);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ") {").end();
-					pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppClassName).append("*").space().append(uncapitalizedGenCppClassName).append(" = ").append("(").append(genCppClassName).append("*)").append("pAddress;").end();
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return").space().append(uncapitalizedGenCppClassName).append("->").append(methodName);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
-					if(cppMethodCallParamatersAsString != null) {
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, cppMethodCallParamatersAsString);
-					}
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ");").end();
-					pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
+					{
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "JNIEXPORT jboolean JNICALL").space().append(jniExportMethodName);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, jniExportMethodParamatersAsString);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ") {").end();
+						pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppClassName).append("*").space().append(uncapitalizedGenCppClassName).append(" = ").append("(").append(genCppClassName).append("*)").append("pAddress;").end();
 
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, "bool").space().append(genCppClassName).append("::").append(methodName);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, "(");
-					if(cppMethodParamatersAsString != null) {
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, cppMethodParamatersAsString);
+						/* Wrap non-primitives in local variables. */
+						{
+							for(int i = 0; i < parameterTypes.length; i++) {
+								final Class<?> parameterType = parameterTypes[i];
+								final String parameterName = parameterNames[i];
+								if(!Util.isPrimitiveType(parameterType)) {
+									final String genCppParameterTypeName = Util.getGenCppClassName(parameterType, this.mGenCppClassSuffix);
+									final String uncapitalizedGenCppParameterTypeName = Util.getGenCppLocalVariableParameterName(parameterName, this.mGenCppClassSuffix);
+									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppParameterTypeName).append("*").space().append(uncapitalizedGenCppParameterTypeName).append(" = new ").append(genCppParameterTypeName).append("(").append(parameterName).append(");").end();
+								}
+							}
+						}
+
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "jboolean").space().append("result").append(" = ").append(uncapitalizedGenCppClassName).append("->").append(methodName);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
+						if(cppMethodCallParamatersAsString != null) {
+							pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, cppMethodCallParamatersAsString);
+						}
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ");").end();
+
+						/* Delete wrapped non-primitives in local variables. */
+						{
+							for(int i = 0; i < parameterTypes.length; i++) {
+								final Class<?> parameterType = parameterTypes[i];
+								final String parameterName = parameterNames[i];
+								if(!Util.isPrimitiveType(parameterType)) {
+									final String uncapitalizedGenCppParameterTypeName = Util.getGenCppLocalVariableParameterName(parameterName, this.mGenCppClassSuffix);
+									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "delete ").append(uncapitalizedGenCppParameterTypeName).append(";").end();
+								}
+							}
+						}
+
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return result;").end();
+						pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
+
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "jboolean").space().append(genCppClassName).append("::").append(methodName);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "(");
+						if(cppMethodParamatersAsString != null) {
+							pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, cppMethodParamatersAsString);
+						}
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ") {").end();
+						pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return false;").end();
+						pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
 					}
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, ") {").end();
-					pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS_PUBLIC);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, "return false;").end();
-					pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS_PUBLIC);
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS_PUBLIC, "}").end();
 				}
 			} else {
 				System.err.println("Skipping callback: " + pClass.getSimpleName() + "." + methodName + " -> " + returnType);
@@ -614,6 +670,9 @@ public class Generator {
 	private void generateClassSetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
+		if(false) {
+			this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		}
 		// TODO Generate code.
 	}
 
@@ -622,6 +681,10 @@ public class Generator {
 
 		// TODO Support all types?
 		if((returnType == Byte.TYPE) || (returnType == Short.TYPE) || (returnType == Integer.TYPE) || (returnType == Long.TYPE) || (returnType == Float.TYPE) || (returnType == Double.TYPE) || (returnType == Boolean.TYPE)) {
+			if(false) {
+				this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+			}
+
 			// TODO Generate code.
 		}
 	}
@@ -648,9 +711,7 @@ public class Generator {
 
 	private static GenCppClassSourceFileSegment getGenCppClassSourceFileSegmentByVisibilityModifier(final int modifiers) {
 		if(Modifier.isPublic(modifiers)) {
-			return GenCppClassSourceFileSegment.METHODS_PUBLIC;
-		} else if(Modifier.isProtected(modifiers)) {
-			return GenCppClassSourceFileSegment.METHODS_PROTECTED;
+			return GenCppClassSourceFileSegment.METHODS;
 		} else {
 			throw new IllegalArgumentException();
 		}
