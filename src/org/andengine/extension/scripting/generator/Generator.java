@@ -272,11 +272,11 @@ public class Generator {
 		genCppClassFileWriter.begin();
 
 		this.generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-//		if(!Modifier.isAbstract(pClass.getModifiers())) {
+		if(!Modifier.isAbstract(pClass.getModifiers())) {
 	 		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 			this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 			this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-//		}
+		}
 		this.generateClassFooter(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 
 		genJavaClassFileWriter.end();
@@ -294,7 +294,9 @@ public class Generator {
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package").space().append(genJavaClassPackageName).append(";").end();
 
 			/* Imports. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(pClass.getName()).append(";").end();
+			if(!Modifier.isAbstract(pClass.getModifiers())) {
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(pClass.getName()).append(";").end();
+			}
 
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTANTS);
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
@@ -306,9 +308,10 @@ public class Generator {
 			/* Class. */
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public").space();
 			if(Modifier.isAbstract(pClass.getModifiers())) {
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "abstract").space();
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "abstract").space().append("class").space().append(genJavaClassName).space().append("{").end();
+			} else {
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
 			}
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
 
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.STATIC_METHODS, "public static native void nativeInitClass();").end();
 		}
@@ -425,6 +428,9 @@ public class Generator {
 				final String methodParamatersAsString = Util.getJavaMethodParamatersAsString(pConstructor);
 				final String methodCallParamatersAsString = Util.getJavaMethodCallParamatersAsString(pConstructor);
 
+				if(pConstructor.isAnnotationPresent(Deprecated.class)) {
+					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "@Deprecated").end();
+				}
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, visibilityModifiers).space().append(genJavaClassName).append("(");
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "final long pAddress");
 				if(methodParamatersAsString != null) {
