@@ -410,8 +410,18 @@ public class Generator {
 	}
 
 	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws ParameterNamesNotFoundException {
+		boolean zeroArgumentConstructorFound = false;
 		for(final Constructor<?> constructor : pClass.getConstructors()) {
+			if(constructor.getParameterTypes().length == 0) {
+				zeroArgumentConstructorFound = true;
+			}
 			this.generateClassConstructor(pClass, constructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		}
+
+		/* We need to generate a zero-arg constructor on the native side, so that the subclasses can make use of this constructor. */
+		 // TODO Think if generating a protected zero-arg constructor is viable in all cases.
+		if(!zeroArgumentConstructorFound) {
+//			this.generateZeroArgumentNativeConstructor(...);
 		}
 	}
 
@@ -500,7 +510,7 @@ public class Generator {
 
 				/* Generate Java side of the callback. */
 				final String javaNativeMethodName = Util.getJavaNativeMethodName(pMethod);
-				final String jniExportMethodName = Util.getJNIExportMethodName(pMethod, this.mGenJavaClassSuffix);
+				final String jniExportMethodName = Util.getJNIExportMethodName(pClass, pMethod, this.mGenJavaClassSuffix);
 				final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
 				final String uncapitalizedGenCppClassName = Util.uncapitalizeFirstCharacter(genCppClassName);
 
