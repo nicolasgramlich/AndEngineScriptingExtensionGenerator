@@ -41,7 +41,7 @@ public class AndEngineScriptingExtensionGenerator {
 	private File mGenJavaRoot;
 
 	@Option(required = false, name = "-gen-java-class-suffix")
-	private final String mGenJavaClassSuffix = "Proxy";
+	private String mGenJavaClassSuffix = "Proxy";
 
 	@Option(required = false, name = "-gen-java-formatter")
 	private JavaFormatter mGenJavaFormatter;

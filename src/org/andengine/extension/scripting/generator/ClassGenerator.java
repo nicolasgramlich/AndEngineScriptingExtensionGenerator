@@ -291,20 +291,46 @@ public class ClassGenerator extends Generator {
 
 			/* Generate native constructor. */
 			{
-				final GenCppClassSourceFileSegment genCppClassSourceFileSegment = this.mUtil.getGenCppClassSourceFileSegmentByVisibilityModifier(modifiers);
 				final GenCppClassHeaderFileSegment genCppClassHeaderFileSegment = this.mUtil.getGenCppClassHeaderFileSegmentByVisibilityModifier(modifiers);
+
+				final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pConstructor);
+				final String genCppMethodParamatersAsString = this.mUtil.getGenCppMethodParamatersAsString(pConstructor);
+				final String genJNIMethodCallParamatersAsString = this.mUtil.getJNIMethodCallParamatersAsString(pConstructor);
+				final String genCppStaticClassMemberName = this.mUtil.getGenCppStaticClassMemberName(pClass);
+				final String jniMethodSignature = this.mUtil.getJNIMethodSignature(pConstructor);
 
 				/* Header. */
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppClassName);
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, "(");
-				final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pConstructor);
 				if(genCppMethodHeaderParamatersAsString != null) {
 					pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
 				}
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, ");").end();
 
+				final String constructorName = this.mUtil.getGenCppStaticMethodIDFieldName(pConstructor);
 				/* Source. */
-				// TODO
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jmethodID ").append(constructorName).append(";").end();
+
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, constructorName).append(" = JNI_ENV()->GetMethodID(").append(genCppStaticClassMemberName).append(", \"<init>\", \"").append(jniMethodSignature).append("\");").end();
+
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("(");
+				if(genCppMethodParamatersAsString != null) {
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppMethodParamatersAsString);
+				}
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ") {").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = JNI_ENV()->NewObject(").append(genCppStaticClassMemberName).append(", ").append(constructorName);
+				if(genJNIMethodCallParamatersAsString != null) {
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ", (jlong)this, ").append(genJNIMethodCallParamatersAsString).append(");").end();
+				} else {
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ", (jlong)this);").end();
+				}
+				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+				//Entity::Entity(float pX, float pY) {
+				//	this->mUnwrapped = JNI_ENV()->NewObject(sEntityClass, sConstructor, (jlong)this, pX, pY);
+				//}
+
 			}
 		}
 	}

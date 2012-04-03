@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassSourceFileSegment;
 
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 
@@ -320,6 +319,39 @@ public class Util {
 		return this.uncapitalizeFirstCharacter((pParameterName + this.mGenCppClassSuffix).substring(1));
 	}
 
+	public String getJNIMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
+
+		return this.getJNIMethodCallParamatersAsString(parameterTypes, parameterNames);
+	}
+
+	public String getJNIMethodCallParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+		if(pParameterTypes.length == 0) {
+			return null;
+		}
+		final StringBuilder stringBuilder = new StringBuilder();
+
+		for(int i = 0; i < pParameterTypes.length; i++) {
+			final Class<?> parameterType = pParameterTypes[i];
+			final String parameterName;
+			if(this.isPrimitiveType(parameterType)) {
+				parameterName = pParameterNames[i];
+			} else {
+				parameterName = pParameterNames[i] + this.mGenCppClassSuffix + "->unwrap()";
+			}
+
+			if(i == 0) {
+				stringBuilder.append("");
+			} else {
+				stringBuilder.append(", ");
+			}
+			stringBuilder.append(parameterName);
+		}
+
+		return stringBuilder.toString();
+	}
+
 	public String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
 		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
 		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
@@ -344,6 +376,15 @@ public class Util {
 	public String getGenCppStaticMethodIDFieldName(final Method pMethod) {
 		return "s" + this.capitalizeFirstCharacter(pMethod.getName()) + "Method";
 	}
+	
+	public String getGenCppStaticMethodIDFieldName(final Constructor<?> pConstructor) {
+		final StringBuilder signatureBuilder = new StringBuilder();
+		for(final Class<?> parameteType : pConstructor.getParameterTypes()) {
+			final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
+			signatureBuilder.append(jniMethodSignatureType);
+		}
+		return "sConstructor" + signatureBuilder.toString();
+	}
 
 	public GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
 		if(Modifier.isPublic(modifiers)) {
@@ -354,15 +395,6 @@ public class Util {
 			throw new IllegalArgumentException();
 		}
 	}
-
-	public GenCppClassSourceFileSegment getGenCppClassSourceFileSegmentByVisibilityModifier(final int modifiers) {
-		if(Modifier.isPublic(modifiers)) {
-			return GenCppClassSourceFileSegment.METHODS;
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-
 
 	public String getJNIParameterTypeName(final Class<?> parameterType) {
 		final String parameterTypeName;
@@ -386,14 +418,26 @@ public class Util {
 		return parameterTypeName;
 	}
 
+	public String getJNIMethodSignature(final Constructor<?> pConstructor) {
+		final Class<?>[] parameterTypes = pConstructor.getParameterTypes();
+		final Class<?>[] expandedParameterTypes = new Class<?>[parameterTypes.length + 1];
+		System.arraycopy(parameterTypes, 0, expandedParameterTypes, 1, parameterTypes.length);
+		expandedParameterTypes[0] = Long.TYPE;
+		return this.getJNIMethodSignature(expandedParameterTypes, Void.TYPE);
+	}
+
 	public String getJNIMethodSignature(final Method pMethod) {
+		return this.getJNIMethodSignature(pMethod.getParameterTypes(), pMethod.getReturnType());
+	}
+
+	public String getJNIMethodSignature(final Class<?>[] pParameterTypes, final Class<?> pReturnType) {
 		final StringBuilder signatureBuilder = new StringBuilder();
 		signatureBuilder.append("(");
-		for(final Class<?> parameteType : pMethod.getParameterTypes()) {
+		for(final Class<?> parameteType : pParameterTypes) {
 			signatureBuilder.append(this.getJNIMethodSignatureType(parameteType));
 		}
 		signatureBuilder.append(")");
-		signatureBuilder.append(this.getJNIMethodSignatureType(pMethod.getReturnType()));
+		signatureBuilder.append(this.getJNIMethodSignatureType(pReturnType));
 		return signatureBuilder.toString();
 	}
 
@@ -421,7 +465,7 @@ public class Util {
 		} else if(pType == Double.TYPE) {
 			return "D";
 		} else {
-			return pType.getName().replace('.', '/');
+			return "L" + pType.getName().replace('.', '/') + ";";
 		}
 	}
 
