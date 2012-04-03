@@ -98,11 +98,19 @@ public class Util {
 	}
 
 	public static String getJavaNativeMethodName(final Method pMethod) {
-		return "native" + Util.capitalizeFirstCharacter(pMethod.getName());
+		return Util.getJavaNativeMethodName(pMethod.getName());
+	}
+	
+	public static String getJavaNativeMethodName(final String pMethodName) {
+		return "native" + Util.capitalizeFirstCharacter(pMethodName);
 	}
 
 	public static String getJNIExportMethodName(final Class<?> pClass, final Method pMethod, final String pGenJavaClassSuffix) {
-		return "Java_" + Util.getGenJavaClassPackageName(pClass).replace('.', '_') + "_" + Util.getGenJavaClassName(pClass, pGenJavaClassSuffix) + "_" + Util.getJavaNativeMethodName(pMethod);
+		return Util.getJNIExportMethodName(pClass, pMethod.getName(), pGenJavaClassSuffix);
+	}
+	
+	public static String getJNIExportMethodName(final Class<?> pClass, final String pMethodName, final String pGenJavaClassSuffix) {
+		return "Java_" + Util.getGenJavaClassPackageName(pClass).replace('.', '_') + "_" + Util.getGenJavaClassName(pClass, pGenJavaClassSuffix) + "_" + Util.getJavaNativeMethodName(pMethodName);
 	}
 
 	public static String capitalizeFirstCharacter(final String methodName) {

@@ -64,8 +64,8 @@ public class Generator {
 	@Option(required = false, name = "-gen-cpp-formatter")
 	private CppFormatter mGenCppFormatter;
 
-	@Option(required = false, name = "-gen-method-exclude", multiValued = true)
-	private List<String> mGenMethodsExclude;
+	@Option(required = false, name = "-gen-method-include", multiValued = true)
+	private List<String> mGenMethodsInclude;
 
 	@Option(required = true, name = "-class", multiValued = true)
 	private List<String> mFullyQualifiedClassNames;
@@ -216,7 +216,7 @@ public class Generator {
 
 	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(!this.isGenMethodExcluded(method)) {
+			if(!this.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has") || methodName.startsWith("set")) {
 					this.generateIncludes(method, pGenCppClassFileWriter);
@@ -272,9 +272,11 @@ public class Generator {
 		genCppClassFileWriter.begin();
 
 		this.generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+ 		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+
+		this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+
 		if(!Modifier.isAbstract(pClass.getModifiers())) {
-	 		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-			this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 			this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
 		}
 		this.generateClassFooter(pClass, genJavaClassFileWriter, genCppClassFileWriter);
@@ -294,9 +296,7 @@ public class Generator {
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package").space().append(genJavaClassPackageName).append(";").end();
 
 			/* Imports. */
-			if(!Modifier.isAbstract(pClass.getModifiers())) {
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(pClass.getName()).append(";").end();
-			}
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import").space().append(pClass.getName()).append(";").end();
 
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTANTS);
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
@@ -308,7 +308,7 @@ public class Generator {
 			/* Class. */
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public").space();
 			if(Modifier.isAbstract(pClass.getModifiers())) {
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "abstract").space().append("class").space().append(genJavaClassName).space().append("{").end();
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "abstract").space().append("class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
 			} else {
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "class").space().append(genJavaClassName).space().append("extends").space().append(pClass.getSimpleName()).space().append("{").end();
 			}
@@ -326,11 +326,14 @@ public class Generator {
 
 				/* Imports. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/ScriptingEnvironment.h\"").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/AndEngineScriptingExtension.h\"").end();
 
 				/* Externs. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
+				
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL ").append(Util.getJNIExportMethodName(pClass, "initClass", this.mGenJavaClassSuffix)).append("(JNIEnv*, jclass);").end();
+				
 
 				/* Class. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ");
@@ -411,7 +414,8 @@ public class Generator {
 
 	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws ParameterNamesNotFoundException {
 		boolean zeroArgumentConstructorFound = false;
-		for(final Constructor<?> constructor : pClass.getConstructors()) {
+		final Constructor<?>[] constructors = pClass.getConstructors();
+		for(final Constructor<?> constructor : constructors) {
 			if(constructor.getParameterTypes().length == 0) {
 				zeroArgumentConstructorFound = true;
 			}
@@ -419,10 +423,21 @@ public class Generator {
 		}
 
 		/* We need to generate a zero-arg constructor on the native side, so that the subclasses can make use of this constructor. */
-		 // TODO Think if generating a protected zero-arg constructor is viable in all cases.
+		// TODO Think if generating a protected zero-arg constructor is viable in all cases.
 		if(!zeroArgumentConstructorFound) {
-//			this.generateZeroArgumentNativeConstructor(...);
+			this.generateZeroArgumentNativeConstructor(pClass, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 		}
+	}
+
+	private void generateZeroArgumentNativeConstructor(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+		/* Header. */
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("();").end();
+
+		/* Source. */
+		pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("() {").end();
+		pGenCppClassFileWriter.endLine(GenCppClassSourceFileSegment.METHODS);
+		pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
 	}
 
 	private void generateClassConstructor(final Class<?> pClass, final Constructor<?> pConstructor, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
@@ -469,6 +484,7 @@ public class Generator {
 				final GenCppClassSourceFileSegment genCppClassSourceFileSegment = Generator.getGenCppClassSourceFileSegmentByVisibilityModifier(modifiers);
 				final GenCppClassHeaderFileSegment genCppClassHeaderFileSegment = Generator.getGenCppClassHeaderFileSegmentByVisibilityModifier(modifiers);
 
+				/* Header. */
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppClassName);
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, "(");
 				final String genCppMethodHeaderParamatersAsString = Util.getGenCppMethodHeaderParamatersAsString(pConstructor, this.mGenCppClassSuffix);
@@ -476,13 +492,16 @@ public class Generator {
 					pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
 				}
 				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, ");").end();
+
+				/* Source. */
+				// TODO 
 			}
 		}
 	}
 
 	private void generateClassMethods(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(!this.isGenMethodExcluded(method)) {
+			if(this.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
 					this.generateClassGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
@@ -610,7 +629,7 @@ public class Generator {
 						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, jniExportMethodHeaderParamatersAsString);
 						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, ");").end();
 
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "jboolean").space().append(methodName);
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append("jboolean").space().append(methodName);
 						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
 						if(cppMethodHeaderParamatersAsString != null) {
 							pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, cppMethodHeaderParamatersAsString);
@@ -627,39 +646,27 @@ public class Generator {
 						pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
 						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppClassName).append("*").space().append(uncapitalizedGenCppClassName).append(" = ").append("(").append(genCppClassName).append("*)").append("pAddress;").end();
 
-						/* Wrap non-primitives in local variables. */
+						/* Wrap non-primitives in local variables on the stack. */
 						{
+							this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
 							for(int i = 0; i < parameterTypes.length; i++) {
 								final Class<?> parameterType = parameterTypes[i];
 								final String parameterName = parameterNames[i];
 								if(!Util.isPrimitiveType(parameterType)) {
 									final String genCppParameterTypeName = Util.getGenCppClassName(parameterType, this.mGenCppClassSuffix);
 									final String uncapitalizedGenCppParameterTypeName = Util.getGenCppLocalVariableParameterName(parameterName, this.mGenCppClassSuffix);
-									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppParameterTypeName).append("*").space().append(uncapitalizedGenCppParameterTypeName).append(" = new ").append(genCppParameterTypeName).append("(").append(parameterName).append(");").end();
+									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, genCppParameterTypeName).space().append(uncapitalizedGenCppParameterTypeName).append("(").append(parameterName).append(");").end();
 								}
 							}
 						}
 
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "jboolean").space().append("result").append(" = ").append(uncapitalizedGenCppClassName).append("->").append(methodName);
+						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return").space().append(uncapitalizedGenCppClassName).append("->").append(methodName);
 						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "(");
 						if(cppMethodCallParamatersAsString != null) {
 							pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, cppMethodCallParamatersAsString);
 						}
 						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, ");").end();
 
-						/* Delete wrapped non-primitives in local variables. */
-						{
-							for(int i = 0; i < parameterTypes.length; i++) {
-								final Class<?> parameterType = parameterTypes[i];
-								final String parameterName = parameterNames[i];
-								if(!Util.isPrimitiveType(parameterType)) {
-									final String uncapitalizedGenCppParameterTypeName = Util.getGenCppLocalVariableParameterName(parameterName, this.mGenCppClassSuffix);
-									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "delete ").append(uncapitalizedGenCppParameterTypeName).append(";").end();
-								}
-							}
-						}
-
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return result;").end();
 						pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
 						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
 
@@ -705,10 +712,10 @@ public class Generator {
 		}
 	}
 
-	private boolean isGenMethodExcluded(final Method pMethod) {
+	private boolean isGenMethodIncluded(final Method pMethod) {
 		final String methodName = pMethod.getName();
-		for(final String genMethodExclude : this.mGenMethodsExclude) {
-			if(genMethodExclude.equals(methodName)) {
+		for(final String genMethodInclude : this.mGenMethodsInclude) {
+			if(genMethodInclude.equals(methodName)) {
 				return true;
 			}
 		}
