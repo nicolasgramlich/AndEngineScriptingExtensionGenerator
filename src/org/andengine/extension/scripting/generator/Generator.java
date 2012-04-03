@@ -289,6 +289,7 @@ public class Generator {
 		final String genJavaClassName = Util.getGenJavaClassName(pClass, this.mGenJavaClassSuffix);
 		final String genJavaClassPackageName = Util.getGenJavaClassPackageName(pClass);
 		final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+		final String genCppNativeInitClassJNIExportMethodName = Util.getJNIExportMethodName(pClass, "initClass", this.mGenJavaClassSuffix);
 
 		/* Generate Java header. */
 		{
@@ -331,9 +332,8 @@ public class Generator {
 				/* Externs. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
-				
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL ").append(Util.getJNIExportMethodName(pClass, "initClass", this.mGenJavaClassSuffix)).append("(JNIEnv*, jclass);").end();
-				
+
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL ").append(genCppNativeInitClassJNIExportMethodName).append("(JNIEnv*, jclass);").end();
 
 				/* Class. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : ");
@@ -377,7 +377,14 @@ public class Generator {
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, genCppClassInclude).end();
 
 				/* Statics. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix)).append(";").end();
+				final String genCppStaticClassMemberName = Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(genCppStaticClassMemberName).append(";").end();
+
+				/* Class init. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "JNIEXPORT void JNICALL").space().append(genCppNativeInitClassJNIExportMethodName).append("(JNIEnv* pJNIEnv, jclass pJClass) {").end();
+				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.CLASS_INIT);
+
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, genCppStaticClassMemberName).append(" = (jclass)JNI_ENV()->NewGlobalRef(pJClass);").end();
 
 				/* Wrapper-Constructor */
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("(jobject p").append(genJavaClassName).append(") {").end();
@@ -401,6 +408,10 @@ public class Generator {
 			/* Externs. */
 			pGenCppClassFileWriter.decrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
 			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "}").end();
+
+			/* Class init. */
+			pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.CLASS_INIT);
+			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "}").end();
 
 			/* Class. */
 			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
