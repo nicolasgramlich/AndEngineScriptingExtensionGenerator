@@ -113,12 +113,12 @@ public class Util {
 		return "Java_" + Util.getGenJavaClassPackageName(pClass).replace('.', '_') + "_" + Util.getGenJavaClassName(pClass, pGenJavaClassSuffix) + "_" + Util.getJavaNativeMethodName(pMethodName);
 	}
 
-	public static String capitalizeFirstCharacter(final String methodName) {
-		return Character.toUpperCase(methodName.charAt(0)) + methodName.substring(1, methodName.length());
+	public static String capitalizeFirstCharacter(final String pString) {
+		return Character.toUpperCase(pString.charAt(0)) + pString.substring(1, pString.length());
 	}
 
-	public static String uncapitalizeFirstCharacter(final String methodName) {
-		return Character.toLowerCase(methodName.charAt(0)) + methodName.substring(1, methodName.length());
+	public static String uncapitalizeFirstCharacter(final String pString) {
+		return Character.toLowerCase(pString.charAt(0)) + pString.substring(1, pString.length());
 	}
 
 	public static String getModifiersAsString(final int pModifiers) {
@@ -330,6 +330,10 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
+	public static String getGenCppStaticMethodIDFieldName(final Method pMethod) {
+		return "s" + Util.capitalizeFirstCharacter(pMethod.getName()) + "Method";
+	}
+
 	public static String getJNIParameterTypeName(final Class<?> parameterType) {
 		final String parameterTypeName;
 		if(parameterType == Byte.TYPE) {
@@ -350,6 +354,73 @@ public class Util {
 			parameterTypeName = "jobject";
 		}
 		return parameterTypeName;
+	}
+
+	public static String getJNIMethodSignature(final Method pMethod) {
+		final StringBuilder signatureBuilder = new StringBuilder();
+		signatureBuilder.append("(");
+		for(final Class<?> parameteType : pMethod.getParameterTypes()) {
+			signatureBuilder.append(Util.getJNIMethodSignatureType(parameteType));
+		}
+		signatureBuilder.append(")");
+		signatureBuilder.append(Util.getJNIMethodSignatureType(pMethod.getReturnType()));
+		return signatureBuilder.toString();
+	}
+
+	private static String getJNIMethodSignatureType(final Class<?> pType) {
+		if(pType.isArray()) {
+			return "[" + Util.getJNIMethodSignatureType(pType.getComponentType());
+		}
+
+		if(pType == Void.TYPE) {
+			return "V";
+		} else if(pType == Boolean.TYPE) {
+			return "Z";
+		} else if(pType == Byte.TYPE) {
+			return "B";
+		} else if(pType == Character.TYPE) {
+			return "C";
+		} else if(pType == Short.TYPE) {
+			return "S";
+		} else if(pType == Integer.TYPE) {
+			return "I";
+		} else if(pType == Long.TYPE) {
+			return "J";
+		} else if(pType == Float.TYPE) {
+			return "F";
+		} else if(pType == Double.TYPE) {
+			return "D";
+		} else {
+			return pType.getName().replace('.', '/');
+		}
+	}
+
+	public static String getJNICallXYZMethodName(final Class<?> pType) {
+		if(pType == Void.TYPE) {
+			return "CallVoidMethod";
+		} else if(pType == Boolean.TYPE) {
+			return "CallBooleanMethod";
+		} else if(pType == Byte.TYPE) {
+			return "CallByteMethod";
+		} else if(pType == Character.TYPE) {
+			return "CallCharMethod";
+		} else if(pType == Short.TYPE) {
+			return "CallShortMethod";
+		} else if(pType == Integer.TYPE) {
+			return "CallIntMethod";
+		} else if(pType == Long.TYPE) {
+			return "CallLongMethod";
+		} else if(pType == Float.TYPE) {
+			return "CallFloatMethod";
+		} else if(pType == Double.TYPE) {
+			return "CallDoubleMethod";
+		} else if(pType == String.class) {
+			return "CallStringMethod";
+		} else if(pType == Object.class) {
+			return "CallObjectMethod";
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	public static String getGenCppParameterTypeName(final Class<?> pParameterType, final String pGenCppClassSuffix) {

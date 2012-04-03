@@ -715,11 +715,33 @@ public class Generator {
 
 		// TODO Support all types?
 		if((returnType == Byte.TYPE) || (returnType == Short.TYPE) || (returnType == Integer.TYPE) || (returnType == Long.TYPE) || (returnType == Float.TYPE) || (returnType == Double.TYPE) || (returnType == Boolean.TYPE)) {
-			if(false) {
-				this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-			}
+			this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 
-			// TODO Generate code.
+			final String genCppStaticClassMemberName = Util.getGenCppStaticClassMemberName(pClass, this.mGenCppClassSuffix);
+			final String genCppStaticMethodIDFieldName = Util.getGenCppStaticMethodIDFieldName(pMethod);
+			final String jniMethodSignature = Util.getJNIMethodSignature(pMethod);
+			final String returnTypeGenCppParameterTypeName = Util.getGenCppParameterTypeName(pMethod.getReturnType(), this.mGenCppClassSuffix);
+			final String genCppClassName = Util.getGenCppClassName(pClass, this.mGenCppClassSuffix);
+			final String methodName = pMethod.getName();
+
+			/* Generate native side of the getter. */
+			{
+				/* Generate virutal method in Header. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeGenCppParameterTypeName).space().append(methodName).append("();").end(); // TODO Parameters? TODO Visiblity Modifier?
+				
+				/* Generate static methodID field. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static").space().append("jmethodID").space().append(genCppStaticMethodIDFieldName).append(";").end();
+				
+				/* Cache static methodID field. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, genCppStaticMethodIDFieldName).append(" = JNI_ENV()->GetMethodID(").append(genCppStaticClassMemberName).append(", \"").append(methodName).append("\", \"").append(jniMethodSignature).append("\");").end();
+
+				/* Call java method using static methodID field. */
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, returnTypeGenCppParameterTypeName).space().append(genCppClassName).append("::").append(methodName).append("() {").end(); // TODO Parameters?
+				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return JNI_ENV()->").append(Util.getJNICallXYZMethodName(pMethod.getReturnType())).append("(this->mUnwrapped, ").append(genCppStaticMethodIDFieldName).append(");").end(); // TODO Parameters?
+				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end(); // TODO Parameters?
+			}
 		}
 	}
 
