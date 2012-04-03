@@ -301,7 +301,7 @@ public class Util {
 			if(this.isPrimitiveType(parameterType)) {
 				parameterName = pParameterNames[i];
 			} else {
-				parameterName = this.getGenCppLocalVariableParameterName(pParameterNames[i]);
+				parameterName = this.getGenCppLocalVariableParameterName(pParameterNames[i], true);
 			}
 
 			if(i == 0) {
@@ -316,7 +316,11 @@ public class Util {
 	}
 
 	public String getGenCppLocalVariableParameterName(final String pParameterName) {
-		return this.uncapitalizeFirstCharacter((pParameterName + this.mGenCppClassSuffix).substring(1));
+		return this.getGenCppLocalVariableParameterName(pParameterName, false);
+	}
+
+	public String getGenCppLocalVariableParameterName(final String pParameterName, final boolean pAddressify) {
+		return ((pAddressify) ? "&" : "") + this.uncapitalizeFirstCharacter((pParameterName + this.mGenCppClassSuffix).substring(1));
 	}
 
 	public String getJNIMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
@@ -441,7 +445,7 @@ public class Util {
 		return signatureBuilder.toString();
 	}
 
-	private String getJNIMethodSignatureType(final Class<?> pType) {
+	public String getJNIMethodSignatureType(final Class<?> pType) {
 		if(pType.isArray()) {
 			return "[" + this.getJNIMethodSignatureType(pType.getComponentType());
 		}

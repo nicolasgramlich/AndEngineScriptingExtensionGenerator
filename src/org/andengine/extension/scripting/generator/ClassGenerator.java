@@ -42,7 +42,7 @@ public class ClassGenerator extends Generator {
 	// Constructors
 	// ===========================================================
 
-	public ClassGenerator(final File pGenCppRoot, final File pGenJavaRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final List<String> pGenMethodsInclude, final Util pUtil) {
+	public ClassGenerator(final File pGenJavaRoot, final File pGenCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final List<String> pGenMethodsInclude, final Util pUtil) {
 		super(pGenMethodsInclude, pUtil);
 
 		this.mGenCppRoot = pGenCppRoot;
@@ -164,7 +164,7 @@ public class ClassGenerator extends Generator {
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
 
-				/* Wrapper-Constructor */
+				/* Wrapper-Constructor. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("(jobject);").end();
 			}
 
@@ -185,7 +185,7 @@ public class ClassGenerator extends Generator {
 
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, genCppStaticClassMemberName).append(" = (jclass)JNI_ENV()->NewGlobalRef(pJClass);").end();
 
-				/* Wrapper-Constructor */
+				/* Wrapper-Constructor. */
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("(jobject p").append(genJavaClassName).append(") {").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = p").append(genJavaClassName).append(";").end();
@@ -327,10 +327,6 @@ public class ClassGenerator extends Generator {
 				}
 				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
-				//Entity::Entity(float pX, float pY) {
-				//	this->mUnwrapped = JNI_ENV()->NewObject(sEntityClass, sConstructor, (jlong)this, pX, pY);
-				//}
-
 			}
 		}
 	}

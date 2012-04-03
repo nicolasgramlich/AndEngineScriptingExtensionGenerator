@@ -140,9 +140,9 @@ public class AndEngineScriptingExtensionGenerator {
 				if(clazz.isInterface()) {
 					new InterfaceGenerator(this.mGenCppRoot, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateInterfaceCode(clazz);
 				} else if(clazz.isEnum()) {
-//					this.generateEnumCode(clazz);
+					new EnumGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateEnumCode(clazz);
 				} else {
-					new ClassGenerator(this.mGenCppRoot, this.mGenJavaRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateClassCode(clazz);
+					new ClassGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateClassCode(clazz);
 				}
 				System.out.println(" done!");
 			} catch (final Throwable t) {
