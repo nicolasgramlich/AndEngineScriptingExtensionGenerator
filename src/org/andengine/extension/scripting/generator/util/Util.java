@@ -6,6 +6,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassSourceFileSegment;
+
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 
 /**
@@ -23,9 +26,17 @@ public class Util {
 	// Fields
 	// ===========================================================
 
+	private final String mGenJavaClassSuffix;
+	private final String mGenCppClassSuffix;
+
 	// ===========================================================
 	// Constructors
 	// ===========================================================
+
+	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix) {
+		this.mGenJavaClassSuffix = pGenJavaClassSuffix;
+		this.mGenCppClassSuffix = pGenCppClassSuffix;
+	}
 
 	// ===========================================================
 	// Getter & Setter
@@ -35,93 +46,93 @@ public class Util {
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
 
-	public static File getInJavaClassSourceFile(final File pInJavaRoot, final String pFullyQualifiedClassName) {
+	public File getInJavaClassSourceFile(final File pInJavaRoot, final String pFullyQualifiedClassName) {
 		return new File(pInJavaRoot, pFullyQualifiedClassName.replace('.', File.separatorChar) + ".java");
 	}
 
-	public static File getInJavaClassFile(final File pInJavaBinRootClasses, final String pFullyQualifiedClassName) {
+	public File getInJavaClassFile(final File pInJavaBinRootClasses, final String pFullyQualifiedClassName) {
 		return new File(pInJavaBinRootClasses, pFullyQualifiedClassName.replace('.', File.separatorChar) + ".class");
 	}
 
-	public static File getGenJavaClassSourceFile(final File pGenJavaRoot, final Class<?> pClass, final String pGenJavaClassSuffix) {
-		return new File(pGenJavaRoot, Util.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + pGenJavaClassSuffix + ".java");
+	public File getGenJavaClassSourceFile(final File pGenJavaRoot, final Class<?> pClass) {
+		return new File(pGenJavaRoot, this.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + this.mGenJavaClassSuffix + ".java");
 	}
 
-	public static File getGenCppClassSourceFile(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + pGenCppClassSuffix + ".cpp");
+	public File getGenCppClassSourceFile(final File pGenCppRoot, final Class<?> pClass) {
+		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mGenCppClassSuffix + ".cpp");
 	}
 
-	public static File getGenCppClassHeaderFile(final File pGenCppRoot, final Class<?> pClass, final String pGenCppClassSuffix) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + pGenCppClassSuffix + ".h");
+	public File getGenCppClassHeaderFile(final File pGenCppRoot, final Class<?> pClass) {
+		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mGenCppClassSuffix + ".h");
 	}
 
-	public static String getGenCppClassInclude(final Class<?> pClass, final String pGenCppClassSuffix) {
-		return "#include \"src/" + pClass.getName().replace('.', '/').replace('&', '/') + pGenCppClassSuffix + ".h\"";
+	public String getGenCppClassInclude(final Class<?> pClass) {
+		return "#include \"src/" + pClass.getName().replace('.', '/').replace('&', '/') + this.mGenCppClassSuffix + ".h\"";
 	}
 
-	public static String getGenJavaClassImport(final Class<?> pClass) {
+	public String getGenJavaClassImport(final Class<?> pClass) {
 		if(pClass.isArray()) {
-			return Util.getGenJavaClassImport(pClass.getComponentType());
+			return this.getGenJavaClassImport(pClass.getComponentType());
 		} else {
 			return "import " + pClass.getName().replace('$', '.') + ";";
 		}
 	}
 
-	public static String getVisibilityModifiersAsString(final AccessibleObject pAccessibleObject) {
+	public String getVisibilityModifiersAsString(final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
-			return Util.getModifiersAsString(((Constructor<?>)pAccessibleObject).getModifiers());
+			return this.getModifiersAsString(((Constructor<?>)pAccessibleObject).getModifiers());
 		} else if(pAccessibleObject instanceof Method) {
-			return Util.getModifiersAsString((((Method)pAccessibleObject)).getModifiers());
+			return this.getModifiersAsString((((Method)pAccessibleObject)).getModifiers());
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	public static String getGenJavaClassName(final Class<?> pClass, final String pGenJavaClassSuffix) {
-		return pClass.getSimpleName() + pGenJavaClassSuffix;
+	public String getGenJavaClassName(final Class<?> pClass) {
+		return pClass.getSimpleName() + this.mGenJavaClassSuffix;
 	}
 
-	public static String getGenCppClassName(final Class<?> pClass, final String pGenCppClassSuffix) {
-		return pClass.getSimpleName() + pGenCppClassSuffix;
+	public String getGenCppClassName(final Class<?> pClass) {
+		return pClass.getSimpleName() + this.mGenCppClassSuffix;
 	}
 
-	public static String getGenCppStaticClassMemberName(final Class<?> pClass, final String pGenCppClassSuffix) {
-		return "s" + pClass.getSimpleName() + pGenCppClassSuffix + "Class";
+	public String getGenCppStaticClassMemberName(final Class<?> pClass) {
+		return "s" + pClass.getSimpleName() + this.mGenCppClassSuffix + "Class";
 	}
 
-	public static String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {
+	public String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {
 		return pClass.getName().replace("org.andengine", "org.andengine.extension.scripting");
 	}
 
-	public static String getGenJavaClassPackageName(final Class<?> pClass) {
+	public String getGenJavaClassPackageName(final Class<?> pClass) {
 		return pClass.getPackage().getName().replace("org.andengine", "org.andengine.extension.scripting");
 	}
 
-	public static String getJavaNativeMethodName(final Method pMethod) {
-		return Util.getJavaNativeMethodName(pMethod.getName());
-	}
-	
-	public static String getJavaNativeMethodName(final String pMethodName) {
-		return "native" + Util.capitalizeFirstCharacter(pMethodName);
+	public String getJavaNativeMethodName(final Method pMethod) {
+		return this.getJavaNativeMethodName(pMethod.getName());
 	}
 
-	public static String getJNIExportMethodName(final Class<?> pClass, final Method pMethod, final String pGenJavaClassSuffix) {
-		return Util.getJNIExportMethodName(pClass, pMethod.getName(), pGenJavaClassSuffix);
-	}
-	
-	public static String getJNIExportMethodName(final Class<?> pClass, final String pMethodName, final String pGenJavaClassSuffix) {
-		return "Java_" + Util.getGenJavaClassPackageName(pClass).replace('.', '_') + "_" + Util.getGenJavaClassName(pClass, pGenJavaClassSuffix) + "_" + Util.getJavaNativeMethodName(pMethodName);
+	public String getJavaNativeMethodName(final String pMethodName) {
+		return "native" + this.capitalizeFirstCharacter(pMethodName);
 	}
 
-	public static String capitalizeFirstCharacter(final String pString) {
+	public String getJNIExportMethodName(final Class<?> pClass, final Method pMethod) {
+		return this.getJNIExportMethodName(pClass, pMethod.getName());
+	}
+
+	public String getJNIExportMethodName(final Class<?> pClass, final String pMethodName) {
+		return "Java_" + this.getGenJavaClassPackageName(pClass).replace('.', '_') + "_" + this.getGenJavaClassName(pClass) + "_" + this.getJavaNativeMethodName(pMethodName);
+	}
+
+	public String capitalizeFirstCharacter(final String pString) {
 		return Character.toUpperCase(pString.charAt(0)) + pString.substring(1, pString.length());
 	}
 
-	public static String uncapitalizeFirstCharacter(final String pString) {
+	public String uncapitalizeFirstCharacter(final String pString) {
 		return Character.toLowerCase(pString.charAt(0)) + pString.substring(1, pString.length());
 	}
 
-	public static String getModifiersAsString(final int pModifiers) {
+	public String getModifiersAsString(final int pModifiers) {
 		final StringBuilder modifiersBuilder = new StringBuilder();
 
 		if(Modifier.isPublic(pModifiers)) {
@@ -135,14 +146,14 @@ public class Util {
 		return modifiersBuilder.toString();
 	}
 
-	public static String getJavaMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
-		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+	public String getJavaMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
 
-		return Util.getJavaMethodParamatersAsString(parameterTypes, parameterNames);
+		return this.getJavaMethodParamatersAsString(parameterTypes, parameterNames);
 	}
 
-	public static String getJavaMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+	public String getJavaMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
@@ -166,13 +177,13 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getJavaMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+	public String getJavaMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
 
-		return Util.getJavaMethodCallParamatersAsString(parameterNames);
+		return this.getJavaMethodCallParamatersAsString(parameterNames);
 	}
 
-	public static String getJavaMethodCallParamatersAsString(final String[] pParameterNames) {
+	public String getJavaMethodCallParamatersAsString(final String[] pParameterNames) {
 		if(pParameterNames.length == 0) {
 			return null;
 		}
@@ -192,18 +203,18 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getJNIExportMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+	public String getJNIExportMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
 
-		return Util.getJNIExportMethodHeaderParamatersAsString(parameterTypes);
+		return this.getJNIExportMethodHeaderParamatersAsString(parameterTypes);
 	}
 
-	public static String getJNIExportMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
+	public String getJNIExportMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
 		final StringBuilder stringBuilder = new StringBuilder("JNIEnv*, jobject, jlong");
 
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
-			final String parameterTypeName = Util.getJNIParameterTypeName(parameterType);
+			final String parameterTypeName = this.getJNIParameterTypeName(parameterType);
 
 			stringBuilder.append(", ").append(parameterTypeName);
 		}
@@ -211,13 +222,13 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getGenCppMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject, final String pGenCppClassSuffix) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
+	public String getGenCppMethodHeaderParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
 
-		return Util.getGenCppMethodHeaderParamatersAsString(parameterTypes, pGenCppClassSuffix);
+		return this.getGenCppMethodHeaderParamatersAsString(parameterTypes);
 	}
 
-	public static String getGenCppMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes, final String pGenCppClassSuffix) {
+	public String getGenCppMethodHeaderParamatersAsString(final Class<?>[] pParameterTypes) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
@@ -225,7 +236,7 @@ public class Util {
 
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
-			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType, pGenCppClassSuffix);
+			final String parameterTypeName = this.getGenCppParameterTypeName(parameterType);
 
 			if(i == 0) {
 				stringBuilder.append("");
@@ -238,14 +249,14 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getGenCppMethodParamatersAsString(final AccessibleObject pAccessibleObject, final String pGenCppClassSuffix) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
-		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+	public String getGenCppMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
 
-		return Util.getGenCppMethodParamatersAsString(parameterTypes, parameterNames, pGenCppClassSuffix);
+		return this.getGenCppMethodParamatersAsString(parameterTypes, parameterNames);
 	}
 
-	public static String getGenCppMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames, final String pGenCppClassSuffix) {
+	public String getGenCppMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
@@ -253,12 +264,12 @@ public class Util {
 
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
-			final String parameterTypeName = Util.getGenCppParameterTypeName(parameterType, pGenCppClassSuffix);
+			final String parameterTypeName = this.getGenCppParameterTypeName(parameterType);
 			final String parameterName;
-			if(Util.isPrimitiveType(parameterType)) {
+			if(this.isPrimitiveType(parameterType)) {
 				parameterName = pParameterNames[i];
 			} else {
-				parameterName = pParameterNames[i] + pGenCppClassSuffix;
+				parameterName = pParameterNames[i] + this.mGenCppClassSuffix;
 			}
 
 			if(i == 0) {
@@ -272,14 +283,14 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getGenCppMethodCallParamatersAsString(final AccessibleObject pAccessibleObject, final String pGenCppClassSuffix) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
-		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+	public String getGenCppMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
 
-		return Util.getGenCppMethodCallParamatersAsString(parameterTypes, parameterNames, pGenCppClassSuffix);
+		return this.getGenCppMethodCallParamatersAsString(parameterTypes, parameterNames);
 	}
 
-	public static String getGenCppMethodCallParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames, final String pGenCppClassSuffix) {
+	public String getGenCppMethodCallParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
 		if(pParameterTypes.length == 0) {
 			return null;
 		}
@@ -288,10 +299,10 @@ public class Util {
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
 			final String parameterName;
-			if(Util.isPrimitiveType(parameterType)) {
+			if(this.isPrimitiveType(parameterType)) {
 				parameterName = pParameterNames[i];
 			} else {
-				parameterName = Util.getGenCppLocalVariableParameterName(pParameterNames[i], pGenCppClassSuffix);
+				parameterName = this.getGenCppLocalVariableParameterName(pParameterNames[i]);
 			}
 
 			if(i == 0) {
@@ -305,23 +316,23 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getGenCppLocalVariableParameterName(final String pParameterName, final String pGenCppClassSuffix) {
-		return Util.uncapitalizeFirstCharacter((pParameterName + pGenCppClassSuffix).substring(1));
+	public String getGenCppLocalVariableParameterName(final String pParameterName) {
+		return this.uncapitalizeFirstCharacter((pParameterName + this.mGenCppClassSuffix).substring(1));
 	}
 
-	public static String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
-		final Class<?>[] parameterTypes = Util.getParameterTypes(pAccessibleObject);
-		final String[] parameterNames = Util.getParameterNames(pAccessibleObject);
+	public String getJNIExportMethodParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
+		final Class<?>[] parameterTypes = this.getParameterTypes(pAccessibleObject);
+		final String[] parameterNames = this.getParameterNames(pAccessibleObject);
 
-		return Util.getJNIExportMethodParamatersAsString(parameterTypes, parameterNames);
+		return this.getJNIExportMethodParamatersAsString(parameterTypes, parameterNames);
 	}
 
-	public static String getJNIExportMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
+	public String getJNIExportMethodParamatersAsString(final Class<?>[] pParameterTypes, final String[] pParameterNames) {
 		final StringBuilder stringBuilder = new StringBuilder("JNIEnv* pJNIEnv, jobject pJObject, jlong pAddress");
 
 		for(int i = 0; i < pParameterTypes.length; i++) {
 			final Class<?> parameterType = pParameterTypes[i];
-			final String parameterTypeName = Util.getJNIParameterTypeName(parameterType);
+			final String parameterTypeName = this.getJNIParameterTypeName(parameterType);
 			final String parameterName = pParameterNames[i];
 
 			stringBuilder.append(", ").append(parameterTypeName).append(' ').append(parameterName);
@@ -330,11 +341,30 @@ public class Util {
 		return stringBuilder.toString();
 	}
 
-	public static String getGenCppStaticMethodIDFieldName(final Method pMethod) {
-		return "s" + Util.capitalizeFirstCharacter(pMethod.getName()) + "Method";
+	public String getGenCppStaticMethodIDFieldName(final Method pMethod) {
+		return "s" + this.capitalizeFirstCharacter(pMethod.getName()) + "Method";
 	}
 
-	public static String getJNIParameterTypeName(final Class<?> parameterType) {
+	public GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
+		if(Modifier.isPublic(modifiers)) {
+			return GenCppClassHeaderFileSegment.METHODS_PUBLIC;
+		} else if(Modifier.isProtected(modifiers)) {
+			return GenCppClassHeaderFileSegment.METHODS_PROTECTED;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	public GenCppClassSourceFileSegment getGenCppClassSourceFileSegmentByVisibilityModifier(final int modifiers) {
+		if(Modifier.isPublic(modifiers)) {
+			return GenCppClassSourceFileSegment.METHODS;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+
+	public String getJNIParameterTypeName(final Class<?> parameterType) {
 		final String parameterTypeName;
 		if(parameterType == Byte.TYPE) {
 			parameterTypeName = "jbyte";
@@ -356,20 +386,20 @@ public class Util {
 		return parameterTypeName;
 	}
 
-	public static String getJNIMethodSignature(final Method pMethod) {
+	public String getJNIMethodSignature(final Method pMethod) {
 		final StringBuilder signatureBuilder = new StringBuilder();
 		signatureBuilder.append("(");
 		for(final Class<?> parameteType : pMethod.getParameterTypes()) {
-			signatureBuilder.append(Util.getJNIMethodSignatureType(parameteType));
+			signatureBuilder.append(this.getJNIMethodSignatureType(parameteType));
 		}
 		signatureBuilder.append(")");
-		signatureBuilder.append(Util.getJNIMethodSignatureType(pMethod.getReturnType()));
+		signatureBuilder.append(this.getJNIMethodSignatureType(pMethod.getReturnType()));
 		return signatureBuilder.toString();
 	}
 
-	private static String getJNIMethodSignatureType(final Class<?> pType) {
+	private String getJNIMethodSignatureType(final Class<?> pType) {
 		if(pType.isArray()) {
-			return "[" + Util.getJNIMethodSignatureType(pType.getComponentType());
+			return "[" + this.getJNIMethodSignatureType(pType.getComponentType());
 		}
 
 		if(pType == Void.TYPE) {
@@ -395,7 +425,7 @@ public class Util {
 		}
 	}
 
-	public static String getJNICallXYZMethodName(final Class<?> pType) {
+	public String getJNICallXYZMethodName(final Class<?> pType) {
 		if(pType == Void.TYPE) {
 			return "CallVoidMethod";
 		} else if(pType == Boolean.TYPE) {
@@ -423,7 +453,7 @@ public class Util {
 		}
 	}
 
-	public static String getGenCppParameterTypeName(final Class<?> pParameterType, final String pGenCppClassSuffix) {
+	public String getGenCppParameterTypeName(final Class<?> pParameterType) {
 		if(pParameterType.isArray()) {
 			final Class<?> componentType = pParameterType.getComponentType();
 			if(componentType == Boolean.TYPE) {
@@ -474,15 +504,15 @@ public class Util {
 				return "jobject";
 			} else {
 				// TODO Add import, when name != simplename.
-	//			return parameterType.getName();
-				return pParameterType.getSimpleName() + pGenCppClassSuffix + "*";
+				//			return parameterType.getName();
+				return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
 			}
 		}
 	}
 
-	public static boolean isPrimitiveType(final Class<?> pType) {
+	public boolean isPrimitiveType(final Class<?> pType) {
 		if(pType.isArray()) {
-			return Util.isPrimitiveType(pType.getComponentType());
+			return this.isPrimitiveType(pType.getComponentType());
 		} else {
 			if(pType == Void.TYPE) {
 				return true;
@@ -512,12 +542,12 @@ public class Util {
 		}
 	}
 
-	public static String[] getParameterNames(final AccessibleObject pAccessibleObject) {
+	public String[] getParameterNames(final AccessibleObject pAccessibleObject) {
 		final BytecodeReadingParanamer bytecodeReadingParanamer = new BytecodeReadingParanamer();
 		return bytecodeReadingParanamer.lookupParameterNames(pAccessibleObject);
 	}
 
-	public static Class<?>[] getParameterTypes(final AccessibleObject pAccessibleObject) {
+	public Class<?>[] getParameterTypes(final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			return ((Constructor<?>)pAccessibleObject).getParameterTypes();
 		} else if(pAccessibleObject instanceof Method) {
