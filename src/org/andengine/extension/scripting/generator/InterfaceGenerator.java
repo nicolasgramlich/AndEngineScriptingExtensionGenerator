@@ -106,21 +106,19 @@ public class InterfaceGenerator extends Generator {
 		for(final Method method : pClass.getMethods()) {
 			if(!this.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
-				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has") || methodName.startsWith("set")) {
-					this.generateIncludes(method, pGenCppClassFileWriter);
-					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
-				} else if(methodName.startsWith("on")) {
+				if(methodName.startsWith("on")) {
 					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
 					this.generateInterfaceCallback(pClass, method, pGenCppClassFileWriter);
 				} else {
-//					System.err.println("Skipping interface method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+					this.generateIncludes(method, pGenCppClassFileWriter);
+					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
 				}
 			}
 		}
 	}
 
 	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
-
+		// TODO
 	}
 
 	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {

@@ -378,16 +378,21 @@ public class Util {
 	}
 
 	public String getGenCppStaticMethodIDFieldName(final Method pMethod) {
-		return "s" + this.capitalizeFirstCharacter(pMethod.getName()) + "Method";
+		final StringBuilder signatureBuilder = new StringBuilder();
+		for(final Class<?> parameteType : pMethod.getParameterTypes()) {
+			final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
+			signatureBuilder.append(jniMethodSignatureType);
+		}
+		return "sMethod_" + this.capitalizeFirstCharacter(pMethod.getName()) + "_" + signatureBuilder.toString();
 	}
-	
+
 	public String getGenCppStaticMethodIDFieldName(final Constructor<?> pConstructor) {
 		final StringBuilder signatureBuilder = new StringBuilder();
 		for(final Class<?> parameteType : pConstructor.getParameterTypes()) {
 			final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
 			signatureBuilder.append(jniMethodSignatureType);
 		}
-		return "sConstructor" + signatureBuilder.toString();
+		return "sConstructor_" + signatureBuilder.toString();
 	}
 
 	public GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
@@ -559,8 +564,16 @@ public class Util {
 	}
 
 	public boolean isPrimitiveType(final Class<?> pType) {
+		return this.isPrimitiveType(pType, true);
+	}
+
+	public boolean isPrimitiveType(final Class<?> pType, final boolean pAllowArray) {
 		if(pType.isArray()) {
-			return this.isPrimitiveType(pType.getComponentType());
+			if(pAllowArray) {
+				return this.isPrimitiveType(pType.getComponentType());
+			} else {
+				return false;
+			}
 		} else {
 			if(pType == Void.TYPE) {
 				return true;

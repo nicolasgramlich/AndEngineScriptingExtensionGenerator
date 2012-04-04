@@ -335,14 +335,10 @@ public class ClassGenerator extends Generator {
 		for(final Method method : pClass.getMethods()) {
 			if(this.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
-				if(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("has")) {
-					this.generateClassGetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-				} else if(methodName.startsWith("set")) {
-					this.generateClassSetter(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-				} else if(methodName.startsWith("on")) {
+				if(methodName.startsWith("on")) {
 					this.generateClassCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				} else {
-//					System.err.println("Skipping class method: " + pClass.getSimpleName() + "." + methodName + "(...) !");
+					this.generateClassMethod(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 				}
 			}
 		}
@@ -522,20 +518,11 @@ public class ClassGenerator extends Generator {
 		}
 	}
 
-	private void generateClassSetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		final Class<?> returnType = pMethod.getReturnType();
-
-		if(false) {
-			this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
-		}
-		// TODO Generate code.
-	}
-
-	private void generateClassGetter(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassMethod(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		// TODO Support all types?
-		if((returnType == Byte.TYPE) || (returnType == Short.TYPE) || (returnType == Integer.TYPE) || (returnType == Long.TYPE) || (returnType == Float.TYPE) || (returnType == Double.TYPE) || (returnType == Boolean.TYPE)) {
+		if(this.mUtil.isPrimitiveType(returnType, false)) {
 			this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
 
 			final String genCppStaticClassMemberName = this.mUtil.getGenCppStaticClassMemberName(pClass);
