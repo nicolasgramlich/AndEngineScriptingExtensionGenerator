@@ -378,21 +378,30 @@ public class Util {
 	}
 
 	public String getGenCppStaticMethodIDFieldName(final Method pMethod) {
-		final StringBuilder signatureBuilder = new StringBuilder();
-		for(final Class<?> parameteType : pMethod.getParameterTypes()) {
-			final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
-			signatureBuilder.append(jniMethodSignatureType);
+		final Class<?>[] parameterTypes = pMethod.getParameterTypes();
+
+		final StringBuilder signatureBuilder = new StringBuilder("sMethod__" + this.capitalizeFirstCharacter(pMethod.getName()));
+		if(parameterTypes.length > 0) {
+			signatureBuilder.append("__");
+			for(final Class<?> parameteType : parameterTypes) {
+				final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
+				signatureBuilder.append(jniMethodSignatureType);
+			}
 		}
-		return "sMethod_" + this.capitalizeFirstCharacter(pMethod.getName()) + "_" + signatureBuilder.toString();
+		return signatureBuilder.toString();
 	}
 
 	public String getGenCppStaticMethodIDFieldName(final Constructor<?> pConstructor) {
-		final StringBuilder signatureBuilder = new StringBuilder();
-		for(final Class<?> parameteType : pConstructor.getParameterTypes()) {
-			final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
-			signatureBuilder.append(jniMethodSignatureType);
+		final Class<?>[] parameterTypes = pConstructor.getParameterTypes();
+		final StringBuilder signatureBuilder = new StringBuilder("sConstructor");
+		if(parameterTypes.length > 0) {
+			signatureBuilder.append("__");
+			for(final Class<?> parameteType : parameterTypes) {
+				final String jniMethodSignatureType = this.getJNIMethodSignatureType(parameteType).replace("L", "__").replace('/', '_').replace(";", "__");
+				signatureBuilder.append(jniMethodSignatureType);
+			}
 		}
-		return "sConstructor_" + signatureBuilder.toString();
+		return signatureBuilder.toString();
 	}
 
 	public GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {

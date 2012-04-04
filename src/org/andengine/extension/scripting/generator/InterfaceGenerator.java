@@ -96,7 +96,7 @@ public class InterfaceGenerator extends Generator {
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap() = 0;");
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap() = 0;").end();
 				
 			}
 		}
@@ -104,7 +104,7 @@ public class InterfaceGenerator extends Generator {
 
 	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(!this.isGenMethodIncluded(method)) {
+			if(this.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
 					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
@@ -118,7 +118,18 @@ public class InterfaceGenerator extends Generator {
 	}
 
 	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		// TODO
+		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
+		final String methodName = pMethod.getName();
+
+		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType());
+
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
+		if(genCppMethodHeaderParamatersAsString != null) {
+			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppMethodHeaderParamatersAsString);
+		}
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ")");
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, " = 0;").end();
 	}
 
 	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
