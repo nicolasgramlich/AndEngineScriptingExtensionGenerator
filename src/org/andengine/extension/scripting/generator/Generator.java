@@ -27,14 +27,12 @@ public class Generator {
 	// ===========================================================
 
 	protected final Util mUtil;
-	protected final List<String> mGenMethodsInclude;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public Generator(final List<String> pGenMethodsInclude, final Util pUtil) {
-		this.mGenMethodsInclude = pGenMethodsInclude;
+	public Generator(final Util pUtil) {
 		this.mUtil = pUtil;
 	}
 
@@ -50,50 +48,44 @@ public class Generator {
 	// Methods
 	// ===========================================================
 
-	protected boolean isGenMethodIncluded(final Method pMethod) {
-		final String methodName = pMethod.getName();
-		for(final String genMethodInclude : this.mGenMethodsInclude) {
-			if(genMethodInclude.equals(methodName)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	protected void generateParameterImportsAndIncludes(final AccessibleObject pAccessibleObject, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
 			final Class<?>[] parameterTypes = constructor.getParameterTypes();
 
-			this.generateImports(parameterTypes, pGenJavaClassFileWriter);
-			this.generateIncludes(constructor.getParameterTypes(), pGenCppClassFileWriter);
+			this.generateImports(pGenJavaClassFileWriter, parameterTypes);
+			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
 		} else if(pAccessibleObject instanceof Method) {
 			final Method method = (Method)pAccessibleObject;
 			final Class<?>[] parameterTypes = method.getParameterTypes();
 
-			this.generateImports(parameterTypes, pGenJavaClassFileWriter);
-			this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
+			this.generateImports(pGenJavaClassFileWriter, parameterTypes);
+			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
+
+			this.generateImports(pGenJavaClassFileWriter, method.getReturnType());
+			this.generateIncludes(pGenCppClassFileWriter, method.getReturnType());
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	protected void generateIncludes(final AccessibleObject pAccessibleObject, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	protected void generateIncludes(final GenCppClassFileWriter pGenCppClassFileWriter, final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
 
-			this.generateIncludes(constructor.getParameterTypes(), pGenCppClassFileWriter);
+			this.generateIncludes(pGenCppClassFileWriter, constructor.getParameterTypes());
 		} else if(pAccessibleObject instanceof Method) {
 			final Method method = (Method)pAccessibleObject;
 			final Class<?>[] parameterTypes = method.getParameterTypes();
 
-			this.generateIncludes(parameterTypes, pGenCppClassFileWriter);
+			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
+			this.generateIncludes(pGenCppClassFileWriter, method.getReturnType());
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	protected void generateImports(final Class<?>[] pTypes, final GenJavaClassFileWriter pGenJavaClassFileWriter) {
+	protected void generateImports(final GenJavaClassFileWriter pGenJavaClassFileWriter, final Class<?> ... pTypes) {
 		for(final Class<?> type : pTypes) {
 			if(!this.mUtil.isPrimitiveType(type)) {
 				final String genJavaImportClassName = this.mUtil.getGenJavaClassImport(type);
@@ -102,7 +94,7 @@ public class Generator {
 		}
 	}
 
-	protected void generateIncludes(final Class<?>[] pTypes, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	protected void generateIncludes(final GenCppClassFileWriter pGenCppClassFileWriter, final Class<?> ... pTypes) {
 		for(final Class<?> type : pTypes) {
 			if(!this.mUtil.isPrimitiveType(type)) {
 				final String genCppIncludeClassName = this.mUtil.getGenCppClassInclude(type);

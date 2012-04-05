@@ -3,7 +3,6 @@ package org.andengine.extension.scripting.generator;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.List;
 
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.CppFormatter;
@@ -32,8 +31,8 @@ public class InterfaceGenerator extends Generator {
 	// Constructors
 	// ===========================================================
 
-	public InterfaceGenerator(final File pGenCppRoot, final CppFormatter pGenCppFormatter, final List<String> pGenMethodsInclude, final Util pUtil) {
-		super(pGenMethodsInclude, pUtil);
+	public InterfaceGenerator(final File pGenCppRoot, final CppFormatter pGenCppFormatter, final Util pUtil) {
+		super(pUtil);
 
 		this.mGenCppRoot = pGenCppRoot;
 		this.mGenCppFormatter = pGenCppFormatter;
@@ -73,12 +72,13 @@ public class InterfaceGenerator extends Generator {
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
 
 				/* Imports. */
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
 
 				/* Class. */
 				final Class<?>[] interfaces = pClass.getInterfaces();
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName);
-				this.generateIncludes(interfaces, pGenCppClassFileWriter);
+				this.generateIncludes(pGenCppClassFileWriter, interfaces);
 				if(interfaces.length > 0) {
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " : ");
 
@@ -104,13 +104,13 @@ public class InterfaceGenerator extends Generator {
 
 	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(this.isGenMethodIncluded(method)) {
+			if(this.mUtil.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
-					this.generateIncludes(method.getParameterTypes(), pGenCppClassFileWriter);
+					this.generateIncludes(pGenCppClassFileWriter, method.getParameterTypes());
 					this.generateInterfaceCallback(pClass, method, pGenCppClassFileWriter);
 				} else {
-					this.generateIncludes(method, pGenCppClassFileWriter);
+					this.generateIncludes(pGenCppClassFileWriter, method);
 					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
 				}
 			}
@@ -121,7 +121,7 @@ public class InterfaceGenerator extends Generator {
 		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
 		final String methodName = pMethod.getName();
 
-		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType());
+		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true, true);
 
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
@@ -140,7 +140,7 @@ public class InterfaceGenerator extends Generator {
 		if(pMethod.getReturnType() == Void.TYPE) {
 			returnTypeName = this.mUtil.getGenCppParameterTypeName(Boolean.TYPE);
 		} else {
-			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType());
+			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true, true);
 		}
 
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);

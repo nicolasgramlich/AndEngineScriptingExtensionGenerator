@@ -55,6 +55,9 @@ public class AndEngineScriptingExtensionGenerator {
 	@Option(required = false, name = "-gen-method-include", multiValued = true)
 	private List<String> mGenMethodsInclude;
 
+	@Option(required = false, name = "-gen-class-exclude", multiValued = true)
+	private List<String> mGenClassesExclude;
+
 	@Option(required = true, name = "-class", multiValued = true)
 	private List<String> mFullyQualifiedClassNames;
 
@@ -76,7 +79,7 @@ public class AndEngineScriptingExtensionGenerator {
 		parser.parseArgument(pArgs);
 
 		this.mInJavaBinRootClasses = new File(this.mInJavaBinRoot, "classes/");
-		this.mUtil = new Util(this.mGenJavaClassSuffix, this.mGenCppClassSuffix);
+		this.mUtil = new Util(this.mGenJavaClassSuffix, this.mGenCppClassSuffix, this.mGenMethodsInclude, this.mGenClassesExclude);
 
 		this.checkArguments();
 
@@ -138,11 +141,11 @@ public class AndEngineScriptingExtensionGenerator {
 
 				System.out.print("Generating: '" + className + "' ...");
 				if(clazz.isInterface()) {
-					new InterfaceGenerator(this.mGenCppRoot, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateInterfaceCode(clazz);
+					new InterfaceGenerator(this.mGenCppRoot, this.mGenCppFormatter, this.mUtil).generateInterfaceCode(clazz);
 				} else if(clazz.isEnum()) {
-					new EnumGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateEnumCode(clazz);
+					new EnumGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mUtil).generateEnumCode(clazz);
 				} else {
-					new ClassGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mGenMethodsInclude, this.mUtil).generateClassCode(clazz);
+					new ClassGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mUtil).generateClassCode(clazz);
 				}
 				System.out.println(" done!");
 			} catch (final Throwable t) {

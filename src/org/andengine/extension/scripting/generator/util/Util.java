@@ -5,6 +5,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
 
@@ -27,14 +28,18 @@ public class Util {
 
 	private final String mGenJavaClassSuffix;
 	private final String mGenCppClassSuffix;
+	private final List<String> mGenMethodsInclude;
+	private final List<String> mGenClassesExclude;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix) {
+	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix, final List<String> pGenMethodsInclude, final List<String> pGenClassesExclude) {
 		this.mGenJavaClassSuffix = pGenJavaClassSuffix;
 		this.mGenCppClassSuffix = pGenCppClassSuffix;
+		this.mGenMethodsInclude = pGenMethodsInclude;
+		this.mGenClassesExclude = pGenClassesExclude;
 	}
 
 	// ===========================================================
@@ -66,7 +71,19 @@ public class Util {
 	}
 
 	public String getGenCppClassInclude(final Class<?> pClass) {
-		return "#include \"src/" + pClass.getName().replace('.', '/').replace('&', '/') + this.mGenCppClassSuffix + ".h\"";
+		return this.getGenCppClassInclude(pClass, false);
+	}
+
+	public String getGenCppClassInclude(final Class<?> pClass, final boolean pIgnoreSuffix) {
+		return "#include \"src/" + this.getGenCppFullyQualifiedClassName(pClass, pIgnoreSuffix) + ".h\"";
+	}
+
+	public String getGenCppFullyQualifiedClassName(final Class<?> pClass) {
+		return this.getGenCppFullyQualifiedClassName(pClass, false);
+	}
+
+	public String getGenCppFullyQualifiedClassName(final Class<?> pClass, final boolean pIgnoreSuffix) {
+		return pClass.getName().replace('.', '/').replace('&', '/') + ((pIgnoreSuffix) ? "" : this.mGenCppClassSuffix);
 	}
 
 	public String getGenJavaClassImport(final Class<?> pClass) {
@@ -96,7 +113,11 @@ public class Util {
 	}
 
 	public String getGenCppStaticClassMemberName(final Class<?> pClass) {
-		return "s" + pClass.getSimpleName() + this.mGenCppClassSuffix + "Class";
+		return this.getGenCppStaticClassMemberName(pClass, false);
+	}
+
+	public String getGenCppStaticClassMemberName(final Class<?> pClass, final boolean pIgnoreSuffix) {
+		return "s" + pClass.getSimpleName() + ((pIgnoreSuffix) ? "" : this.mGenCppClassSuffix) + "Class";
 	}
 
 	public String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {
@@ -508,14 +529,16 @@ public class Util {
 			return "CallDoubleMethod";
 		} else if(pType == String.class) {
 			return "CallStringMethod";
-		} else if(pType == Object.class) {
-			return "CallObjectMethod";
 		} else {
-			throw new IllegalArgumentException();
+			return "CallObjectMethod";
 		}
 	}
 
 	public String getGenCppParameterTypeName(final Class<?> pParameterType) {
+		return this.getGenCppParameterTypeName(pParameterType, false, true);
+	}
+
+	public String getGenCppParameterTypeName(final Class<?> pParameterType, final boolean pAutoPtrObjects, final boolean pPointerObjects) {
 		if(pParameterType.isArray()) {
 			final Class<?> componentType = pParameterType.getComponentType();
 			if(componentType == Boolean.TYPE) {
@@ -566,8 +589,15 @@ public class Util {
 				return "jobject";
 			} else {
 				// TODO Add import, when name != simplename.
-				//			return parameterType.getName();
-				return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
+				if(pAutoPtrObjects) {
+					return "std::auto_ptr<" + pParameterType.getSimpleName() + this.mGenCppClassSuffix + ">";
+				} else {
+					if(pPointerObjects) {
+						return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
+					} else {
+						return pParameterType.getSimpleName() + this.mGenCppClassSuffix;
+					}
+				}
 			}
 		}
 	}
@@ -625,6 +655,26 @@ public class Util {
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+
+	public boolean isGenMethodIncluded(final Method pMethod) {
+		final String methodName = pMethod.getName();
+		for(final String genMethodInclude : this.mGenMethodsInclude) {
+			if(genMethodInclude.equals(methodName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean isGenClassIncluded(final Class<?> pClass) {
+		final String className = pClass.getName();
+		for(final String genClassExclude : this.mGenClassesExclude) {
+			if(genClassExclude.equals(className)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	// ===========================================================
