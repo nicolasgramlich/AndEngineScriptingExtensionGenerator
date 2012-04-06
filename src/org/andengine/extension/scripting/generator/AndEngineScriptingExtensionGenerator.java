@@ -47,7 +47,7 @@ public class AndEngineScriptingExtensionGenerator {
 	private JavaFormatter mGenJavaFormatter;
 
 	@Option(required = false, name = "-gen-cpp-class-suffix")
-	private String mGenCppClassSuffix;
+	private String mGenCppClassSuffix = "";
 
 	@Option(required = false, name = "-gen-cpp-formatter")
 	private CppFormatter mGenCppFormatter;

@@ -284,7 +284,21 @@ public class ClassGenerator extends Generator {
 					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ", ");
 					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, methodParamatersAsString);
 				}
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ") {").end();
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ") ");
+				final Class<?>[] exceptions = pConstructor.getExceptionTypes();
+				if(exceptions.length > 0) {
+					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "throws ");
+					for(int i = 0; i < exceptions.length; i++) {
+						final Class<?> exception = exceptions[i];
+						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, exception.getSimpleName());
+						this.generateImports(pGenJavaClassFileWriter, exception);
+						final boolean isLastException = (i == (exceptions.length - 1));
+						if(!isLastException) {
+							pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ", ");
+						}
+					}
+				}
+				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "{").end();
 				pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
 				/* Super call. */
 				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "super(");
@@ -541,7 +555,8 @@ public class ClassGenerator extends Generator {
 		final String genCppStaticClassMemberName = this.mUtil.getGenCppStaticClassMemberName(pClass);
 		final String genCppStaticMethodIDFieldName = this.mUtil.getGenCppStaticMethodIDFieldName(pMethod);
 		final String jniMethodSignature = this.mUtil.getJNIMethodSignature(pMethod);
-		final String returnTypeGenCppParameterTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true, true);
+		final String returnTypeGenCppParameterTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
+		final String returnTypeGenCppParameterTypeNameWithoutPtr = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), false);
 		final String genCppClassName = this.mUtil.getGenCppClassName(pClass);
 		final String methodName = pMethod.getName();
 
@@ -575,8 +590,7 @@ public class ClassGenerator extends Generator {
 				}
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "JNI_ENV()->").append(this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType())).append("(this->mUnwrapped, ").append(genCppStaticMethodIDFieldName);
 			} else {
-				final String returnTypeGenCppParameterTypeNameWithoutAutoPtr = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), false, false);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return ").append(returnTypeGenCppParameterTypeName).append("(new ").append(returnTypeGenCppParameterTypeNameWithoutAutoPtr).append("(JNI_ENV()->").append(this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType())).append("(this->mUnwrapped, ").append(genCppStaticMethodIDFieldName);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return new ").append(returnTypeGenCppParameterTypeNameWithoutPtr).append("(JNI_ENV()->").append(this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType())).append("(this->mUnwrapped, ").append(genCppStaticMethodIDFieldName);
 			}
 			if(jniMethodCallParamatersAsString != null) {
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ", ");
@@ -585,7 +599,7 @@ public class ClassGenerator extends Generator {
 			if(primitiveReturnType) {
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ");").end();
 			} else {
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ")));").end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "));").end();
 			}
 			pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
 			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end(); // TODO Parameters?

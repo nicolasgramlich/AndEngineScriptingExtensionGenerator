@@ -535,10 +535,10 @@ public class Util {
 	}
 
 	public String getGenCppParameterTypeName(final Class<?> pParameterType) {
-		return this.getGenCppParameterTypeName(pParameterType, false, true);
+		return this.getGenCppParameterTypeName(pParameterType, true);
 	}
 
-	public String getGenCppParameterTypeName(final Class<?> pParameterType, final boolean pAutoPtrObjects, final boolean pPointerObjects) {
+	public String getGenCppParameterTypeName(final Class<?> pParameterType, final boolean pPointerObjects) {
 		if(pParameterType.isArray()) {
 			final Class<?> componentType = pParameterType.getComponentType();
 			if(componentType == Boolean.TYPE) {
@@ -589,14 +589,10 @@ public class Util {
 				return "jobject";
 			} else {
 				// TODO Add import, when name != simplename.
-				if(pAutoPtrObjects) {
-					return "std::auto_ptr<" + pParameterType.getSimpleName() + this.mGenCppClassSuffix + ">";
+				if(pPointerObjects) {
+					return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
 				} else {
-					if(pPointerObjects) {
-						return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
-					} else {
-						return pParameterType.getSimpleName() + this.mGenCppClassSuffix;
-					}
+					return pParameterType.getSimpleName() + this.mGenCppClassSuffix;
 				}
 			}
 		}

@@ -121,7 +121,7 @@ public class InterfaceGenerator extends Generator {
 		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
 		final String methodName = pMethod.getName();
 
-		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true, true);
+		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
@@ -140,7 +140,7 @@ public class InterfaceGenerator extends Generator {
 		if(pMethod.getReturnType() == Void.TYPE) {
 			returnTypeName = this.mUtil.getGenCppParameterTypeName(Boolean.TYPE);
 		} else {
-			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true, true);
+			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 		}
 
 		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
