@@ -72,12 +72,20 @@ public class GenCppClassFileWriter {
 		return this.mGenCppClassSourceFileWriter.append(pGenCppClassSourceFileSegment, pString);
 	}
 
+	public GenFileWriterSegment append(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment, final String pString, final Object ... pArguments) {
+		return this.mGenCppClassSourceFileWriter.append(pGenCppClassSourceFileSegment, pString, pArguments);
+	}
+
 	public GenFileWriterSegment endLine(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment) {
 		return this.mGenCppClassSourceFileWriter.endLine(pGenCppClassSourceFileSegment);
 	}
 
 	public GenFileWriterSegment append(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment, final String pString) {
 		return this.mGenCppClassHeaderFileWriter.append(pGenCppClassHeaderFileSegment, pString);
+	}
+
+	public GenFileWriterSegment append(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment, final String pString, final Object ... pArguments) {
+		return this.mGenCppClassHeaderFileWriter.append(pGenCppClassHeaderFileSegment, pString, pArguments);
 	}
 
 	public GenFileWriterSegment endLine(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment) {
