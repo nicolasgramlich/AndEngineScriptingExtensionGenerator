@@ -121,7 +121,7 @@ echo "# Injecting forward declarations ..."
 
 
 echo -n "Injecting into: src/org/andengine/engine/Engine.h ..."
-sed -i -e '/class Engine/ i\
+sed -i "" '/class Engine/ i\
 	class VertexBufferObjectManager; // Forward declaration\
 	class FontManager; // Forward declaration\
 	class TextureManager; // Forward declaration\
@@ -141,8 +141,11 @@ echo "####################################"
 echo "# Fix other stuff ..."
 
 
-echo -n "Fixing 'new IEntity(..) => new Entity(..)' ..."
+echo -n "Fixing: 'new IEntity(..) => new Entity(..)' ..."
 find ./jni -type f -iname "*.cpp" -exec sed -i "" 's/new IEntity/new Entity/' {} \;
+echo " done!"
+echo -n "Fixing: 'return IEntity(..) => return Entity(..)' ..."
+find ./jni -type f -iname "*.cpp" -exec sed -i "" 's/return IEntity/return Entity/' {} \;
 echo " done!"
 
 

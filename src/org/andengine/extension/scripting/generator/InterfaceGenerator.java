@@ -68,8 +68,8 @@ public class InterfaceGenerator extends Generator {
 			/* Header. */
 			{
 				/* #ifdef. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef %s_H", genCppClassName).end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define %s_H", genCppClassName).end();
 
 				/* Imports. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
@@ -77,7 +77,7 @@ public class InterfaceGenerator extends Generator {
 
 				/* Class. */
 				final Class<?>[] interfaces = pClass.getInterfaces();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName);
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class %s", genCppClassName);
 				this.generateIncludes(pGenCppClassFileWriter, interfaces);
 				if(interfaces.length > 0) {
 					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " : ");
@@ -87,7 +87,7 @@ public class InterfaceGenerator extends Generator {
 							pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ", ");
 						}
 						final Class<?> interfaze = interfaces[i];
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public").space().append(this.mUtil.getGenCppClassName(interfaze));
+						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public %s", this.mUtil.getGenCppClassName(interfaze));
 					}
 				}
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
@@ -123,13 +123,7 @@ public class InterfaceGenerator extends Generator {
 
 		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
-		if(genCppMethodHeaderParamatersAsString != null) {
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppMethodHeaderParamatersAsString);
-		}
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ")");
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, " = 0;").end();
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "").end();
 	}
 
 	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
@@ -143,13 +137,7 @@ public class InterfaceGenerator extends Generator {
 			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 		}
 
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual").space().append(returnTypeName).space().append(methodName);
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "(");
-		if(genCppMethodHeaderParamatersAsString != null) {
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppMethodHeaderParamatersAsString);
-		}
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, ")");
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, " = 0;").end();
+		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "");
 	}
 
 	private void generateInterfaceFooter(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {

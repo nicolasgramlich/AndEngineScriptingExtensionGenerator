@@ -81,7 +81,7 @@ public class EnumGenerator extends Generator {
 		/* Generate Java header. */
 		{
 			/* Package. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package").space().append(genJavaClassPackageName).append(";").end();
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package %s;", genJavaClassPackageName).end();
 
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTANTS);
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
@@ -91,8 +91,7 @@ public class EnumGenerator extends Generator {
 			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.STATIC_METHODS);
 
 			/* Class. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public").space();
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "class").space().append(genJavaClassName).append(" {").end();
+			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public class %s {", genJavaClassName).end();
 
 			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.STATIC_METHODS, "public static native void nativeInitClass();").end();
 		}
@@ -102,8 +101,8 @@ public class EnumGenerator extends Generator {
 			/* Header. */
 			{
 				/* #ifdef. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef %s_H", genCppClassName).end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define %s_H", genCppClassName).end();
 
 				/* Imports. */
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
@@ -114,10 +113,10 @@ public class EnumGenerator extends Generator {
 				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
 
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL ").append(genCppNativeInitClassJNIExportMethodName).append("(JNIEnv*, jclass);").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL %s(JNIEnv*, jclass);", genCppNativeInitClassJNIExportMethodName).end();
 
 				/* Class. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class").space().append(genCppClassName).append(" : public Wrapper {").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class %s : public Wrapper {", genCppClassName).end();
 
 				/* Methods. */
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
@@ -125,10 +124,10 @@ public class EnumGenerator extends Generator {
 				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
 
 				/* Wrapper-Constructor */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("(jobject);").end();
+				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "%s(jobject);", genCppClassName).end();
 
 				for(final Object enumConstant : pClass.getEnumConstants()) {
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "static ").append(genCppClassName).append("* ").append(enumConstant.toString()).append(";").end();
+					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "static %s* %s;", genCppClassName, enumConstant.toString()).end();
 				}
 			}
 
@@ -141,31 +140,29 @@ public class EnumGenerator extends Generator {
 
 				/* Statics. */
 				final String genCppStaticClassMemberName = this.mUtil.getGenCppStaticClassMemberName(pClass, true);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass").space().append(genCppStaticClassMemberName).append(";").end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass %s;", genCppStaticClassMemberName).end();
 
 				/* Class init. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "JNIEXPORT void JNICALL").space().append(genCppNativeInitClassJNIExportMethodName).append("(JNIEnv* pJNIEnv, jclass pJClass) {").end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "JNIEXPORT void JNICALL %s(JNIEnv* pJNIEnv, jclass pJClass) {", genCppNativeInitClassJNIExportMethodName).end();
 				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.CLASS_INIT);
 
 				final String genCppFullyQualifiedClassName = this.mUtil.getGenCppFullyQualifiedClassName(pClass, true);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, genCppStaticClassMemberName).append(" = (jclass)JNI_ENV()->NewGlobalRef(JNI_ENV()->FindClass(\"").append(genCppFullyQualifiedClassName).append("\"));").end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "%s = (jclass)JNI_ENV()->NewGlobalRef(JNI_ENV()->FindClass(\"%s\"));", genCppStaticClassMemberName, genCppFullyQualifiedClassName).end();
 
 				/* Enum-Values. */
 				final String jniSignatureType = this.mUtil.getJNIMethodSignatureType(pClass);
 				for(final Object enumConstant : pClass.getEnumConstants()) {
 					final String enumName = enumConstant.toString();
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, genCppClassName).append("* ").append(genCppClassName).append("::").append(enumName).append(" = NULL;").end();
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "%s* %s::%s = NULL;", genCppClassName, genCppClassName, enumName).end();
 
 					final String jfieldIDLocalVariableName = genCppClassName + "_" + enumName + "_ID";
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "jfieldID ").append(jfieldIDLocalVariableName).append(" = JNI_ENV()->GetStaticFieldID(").append(genCppStaticClassMemberName).append(", \"").append(enumName).append("\", \"").append(jniSignatureType).append("\");").end();
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, genCppClassName).append("::").append(enumName).append(" = new ").append(genCppClassName).append("(JNI_ENV()->GetStaticObjectField(").append(genCppStaticClassMemberName).append(", ").append(jfieldIDLocalVariableName).append("));").end();
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "jfieldID %s = JNI_ENV()->GetStaticFieldID(%s, \"%s\", \"%s\");", jfieldIDLocalVariableName, genCppStaticClassMemberName, enumName, jniSignatureType).end();
+					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "%s::%s = new %s(JNI_ENV()->GetStaticObjectField(%s, %s));", genCppClassName, enumName, genCppClassName, genCppStaticClassMemberName, jfieldIDLocalVariableName).end();
 				}
 
 				/* Wrapper-Constructor. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppClassName).append("::").append(genCppClassName).append("(jobject p").append(genJavaClassName).append(") {").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = p").append(genJavaClassName).append(";").end();
-				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "%s::%s(jobject p%s) {", genCppClassName, genCppClassName, genJavaClassName).end();
+				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "\tthis->mUnwrapped = p%s;", genJavaClassName).end();
 				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
 			}
 		}

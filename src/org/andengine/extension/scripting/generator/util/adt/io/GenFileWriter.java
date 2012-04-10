@@ -75,10 +75,6 @@ public class GenFileWriter<E extends Enum<?>> {
 		return this.append(pSegment, String.format(pString, pArguments));
 	}
 
-	public GenFileWriterSegment space(final E pSegment) {
-		return this.getGenFileWriterSegment(pSegment).space();
-	}
-
 	public GenFileWriterSegment endLine(final E pSegment) {
 		return this.getGenFileWriterSegment(pSegment).end();
 	}
