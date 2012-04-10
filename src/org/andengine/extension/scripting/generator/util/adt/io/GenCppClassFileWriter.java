@@ -29,17 +29,17 @@ public class GenCppClassFileWriter {
 	// Constructors
 	// ===========================================================
 
-	public GenCppClassFileWriter(final File pGenCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter) {
-		this(pGenCppRoot, pClass, pUtil, pCppFormatter, false);
+	public GenCppClassFileWriter(final File pProxyCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter) {
+		this(pProxyCppRoot, pClass, pUtil, pCppFormatter, false);
 	}
 
-	public GenCppClassFileWriter(final File pGenCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter, final boolean pHeaderFileOnly) {
+	public GenCppClassFileWriter(final File pProxyCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter, final boolean pHeaderFileOnly) {
 		if(pHeaderFileOnly) {
 			this.mGenCppClassSourceFileWriter = null;
 		} else {
-			this.mGenCppClassSourceFileWriter = new GenFileWriter<GenCppClassSourceFileSegment>(pUtil.getGenCppClassSourceFile(pGenCppRoot, pClass), pCppFormatter);
+			this.mGenCppClassSourceFileWriter = new GenFileWriter<GenCppClassSourceFileSegment>(pUtil.getGenCppClassSourceFile(pProxyCppRoot, pClass), pCppFormatter);
 		}
-		this.mGenCppClassHeaderFileWriter = new GenFileWriter<GenCppClassHeaderFileSegment>(pUtil.getGenCppClassHeaderFile(pGenCppRoot, pClass), pCppFormatter);
+		this.mGenCppClassHeaderFileWriter = new GenFileWriter<GenCppClassHeaderFileSegment>(pUtil.getGenCppClassHeaderFile(pProxyCppRoot, pClass), pCppFormatter);
 	}
 
 	// ===========================================================

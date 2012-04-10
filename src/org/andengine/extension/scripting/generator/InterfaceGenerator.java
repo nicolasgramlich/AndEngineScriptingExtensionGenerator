@@ -24,17 +24,17 @@ public class InterfaceGenerator extends Generator {
 	// Fields
 	// ===========================================================
 
-	private final File mGenCppRoot;
+	private final File mProxyCppRoot;
 	private final CppFormatter mGenCppFormatter;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public InterfaceGenerator(final File pGenCppRoot, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public InterfaceGenerator(final File pProxyCppRoot, final CppFormatter pGenCppFormatter, final Util pUtil) {
 		super(pUtil);
 
-		this.mGenCppRoot = pGenCppRoot;
+		this.mProxyCppRoot = pProxyCppRoot;
 		this.mGenCppFormatter = pGenCppFormatter;
 	}
 
@@ -51,7 +51,7 @@ public class InterfaceGenerator extends Generator {
 	// ===========================================================
 
 	public void generateInterfaceCode(final Class<?> pClass) throws IOException {
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mUtil, this.mGenCppFormatter, true);
+		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter, true);
 		genCppClassFileWriter.begin();
 
 		this.generateInterfaceHeader(pClass, genCppClassFileWriter);

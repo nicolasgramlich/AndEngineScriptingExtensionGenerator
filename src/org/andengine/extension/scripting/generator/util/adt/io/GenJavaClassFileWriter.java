@@ -28,8 +28,8 @@ public class GenJavaClassFileWriter {
 	// Constructors
 	// ===========================================================
 
-	public GenJavaClassFileWriter(final File pGenJavaRoot, final Class<?> pClass, final Util pUtil, final JavaFormatter pJavaFormatter) {
-		this.mGenJavaClassSourceFileWriter = new GenFileWriter<GenJavaClassSourceFileSegment>(pUtil.getGenJavaClassSourceFile(pGenJavaRoot, pClass), pJavaFormatter);
+	public GenJavaClassFileWriter(final File pProxyJavaRoot, final Class<?> pClass, final Util pUtil, final JavaFormatter pJavaFormatter) {
+		this.mGenJavaClassSourceFileWriter = new GenFileWriter<GenJavaClassSourceFileSegment>(pUtil.getGenJavaClassSourceFile(pProxyJavaRoot, pClass), pJavaFormatter);
 	}
 
 	// ===========================================================

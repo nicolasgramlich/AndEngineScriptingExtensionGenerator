@@ -26,20 +26,20 @@ public class Util {
 	// Fields
 	// ===========================================================
 
-	private final String mGenJavaClassSuffix;
-	private final String mGenCppClassSuffix;
-	private final List<String> mGenMethodsInclude;
-	private final List<String> mGenClassesExclude;
+	private final String mProxyJavaClassSuffix;
+	private final String mProxyCppClassSuffix;
+	private final List<String> mProxyMethodsInclude;
+	private final List<String> mProxyClassesExclude;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
 	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix, final List<String> pGenMethodsInclude, final List<String> pGenClassesExclude) {
-		this.mGenJavaClassSuffix = pGenJavaClassSuffix;
-		this.mGenCppClassSuffix = pGenCppClassSuffix;
-		this.mGenMethodsInclude = pGenMethodsInclude;
-		this.mGenClassesExclude = pGenClassesExclude;
+		this.mProxyJavaClassSuffix = pGenJavaClassSuffix;
+		this.mProxyCppClassSuffix = pGenCppClassSuffix;
+		this.mProxyMethodsInclude = pGenMethodsInclude;
+		this.mProxyClassesExclude = pGenClassesExclude;
 	}
 
 	// ===========================================================
@@ -58,16 +58,16 @@ public class Util {
 		return new File(pInJavaBinRootClasses, pFullyQualifiedClassName.replace('.', File.separatorChar) + ".class");
 	}
 
-	public File getGenJavaClassSourceFile(final File pGenJavaRoot, final Class<?> pClass) {
-		return new File(pGenJavaRoot, this.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + this.mGenJavaClassSuffix + ".java");
+	public File getGenJavaClassSourceFile(final File pProxyJavaRoot, final Class<?> pClass) {
+		return new File(pProxyJavaRoot, this.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + this.mProxyJavaClassSuffix + ".java");
 	}
 
-	public File getGenCppClassSourceFile(final File pGenCppRoot, final Class<?> pClass) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mGenCppClassSuffix + ".cpp");
+	public File getGenCppClassSourceFile(final File pProxyCppRoot, final Class<?> pClass) {
+		return new File(pProxyCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".cpp");
 	}
 
-	public File getGenCppClassHeaderFile(final File pGenCppRoot, final Class<?> pClass) {
-		return new File(pGenCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mGenCppClassSuffix + ".h");
+	public File getGenCppClassHeaderFile(final File pProxyCppRoot, final Class<?> pClass) {
+		return new File(pProxyCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".h");
 	}
 
 	public String getGenCppClassInclude(final Class<?> pClass) {
@@ -83,7 +83,7 @@ public class Util {
 	}
 
 	public String getGenCppFullyQualifiedClassName(final Class<?> pClass, final boolean pIgnoreSuffix) {
-		return pClass.getName().replace('.', '/').replace('&', '/') + ((pIgnoreSuffix) ? "" : this.mGenCppClassSuffix);
+		return pClass.getName().replace('.', '/').replace('&', '/') + ((pIgnoreSuffix) ? "" : this.mProxyCppClassSuffix);
 	}
 
 	public String getGenJavaClassImport(final Class<?> pClass) {
@@ -105,11 +105,11 @@ public class Util {
 	}
 
 	public String getGenJavaClassName(final Class<?> pClass) {
-		return pClass.getSimpleName() + this.mGenJavaClassSuffix;
+		return pClass.getSimpleName() + this.mProxyJavaClassSuffix;
 	}
 
 	public String getGenCppClassName(final Class<?> pClass) {
-		return pClass.getSimpleName() + this.mGenCppClassSuffix;
+		return pClass.getSimpleName() + this.mProxyCppClassSuffix;
 	}
 
 	public String getGenCppStaticClassMemberName(final Class<?> pClass) {
@@ -117,7 +117,7 @@ public class Util {
 	}
 
 	public String getGenCppStaticClassMemberName(final Class<?> pClass, final boolean pIgnoreSuffix) {
-		return "s" + pClass.getSimpleName() + ((pIgnoreSuffix) ? "" : this.mGenCppClassSuffix) + "Class";
+		return "s" + pClass.getSimpleName() + ((pIgnoreSuffix) ? "" : this.mProxyCppClassSuffix) + "Class";
 	}
 
 	public String getGenJavaClassFullyQualifiedName(final Class<?> pClass) {
@@ -289,7 +289,7 @@ public class Util {
 			if(this.isPrimitiveType(parameterType)) {
 				parameterName = pParameterNames[i];
 			} else {
-				parameterName = pParameterNames[i] + this.mGenCppClassSuffix;
+				parameterName = pParameterNames[i] + this.mProxyCppClassSuffix;
 			}
 
 			if(i == 0) {
@@ -341,7 +341,7 @@ public class Util {
 	}
 
 	public String getGenCppLocalVariableParameterName(final String pParameterName, final boolean pAddressify) {
-		return ((pAddressify) ? "&" : "") + this.uncapitalizeFirstCharacter((pParameterName + this.mGenCppClassSuffix).substring(1));
+		return ((pAddressify) ? "&" : "") + this.uncapitalizeFirstCharacter((pParameterName + this.mProxyCppClassSuffix).substring(1));
 	}
 
 	public String getJNIMethodCallParamatersAsString(final AccessibleObject pAccessibleObject) throws IllegalArgumentException {
@@ -363,7 +363,7 @@ public class Util {
 			if(this.isPrimitiveType(parameterType)) {
 				parameterName = pParameterNames[i];
 			} else {
-				parameterName = pParameterNames[i] + this.mGenCppClassSuffix + "->unwrap()";
+				parameterName = pParameterNames[i] + this.mProxyCppClassSuffix + "->unwrap()";
 			}
 
 			if(i == 0) {
@@ -590,9 +590,9 @@ public class Util {
 			} else {
 				// TODO Add import, when name != simplename.
 				if(pPointerObjects) {
-					return pParameterType.getSimpleName() + this.mGenCppClassSuffix + "*";
+					return pParameterType.getSimpleName() + this.mProxyCppClassSuffix + "*";
 				} else {
-					return pParameterType.getSimpleName() + this.mGenCppClassSuffix;
+					return pParameterType.getSimpleName() + this.mProxyCppClassSuffix;
 				}
 			}
 		}
@@ -655,7 +655,7 @@ public class Util {
 
 	public boolean isGenMethodIncluded(final Method pMethod) {
 		final String methodName = pMethod.getName();
-		for(final String genMethodInclude : this.mGenMethodsInclude) {
+		for(final String genMethodInclude : this.mProxyMethodsInclude) {
 			if(genMethodInclude.equals(methodName)) {
 				return true;
 			}
@@ -665,7 +665,7 @@ public class Util {
 
 	public boolean isGenClassIncluded(final Class<?> pClass) {
 		final String className = pClass.getName();
-		for(final String genClassExclude : this.mGenClassesExclude) {
+		for(final String genClassExclude : this.mProxyClassesExclude) {
 			if(genClassExclude.equals(className)) {
 				return false;
 			}

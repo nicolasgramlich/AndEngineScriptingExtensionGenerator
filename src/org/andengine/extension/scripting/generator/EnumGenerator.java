@@ -27,22 +27,22 @@ public class EnumGenerator extends Generator {
 	// Fields
 	// ===========================================================
 
-	private final File mGenJavaRoot;
-	private final File mGenCppRoot;
-	private final JavaFormatter mGenJavaFormatter;
-	private final CppFormatter mGenCppFormatter;
+	private final File mProxyJavaRoot;
+	private final File mProxyCppRoot;
+	private final JavaFormatter mProxyJavaFormatter;
+	private final CppFormatter mProxyCppFormatter;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public EnumGenerator(final File pGenJavaRoot, final File pGenCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public EnumGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
 		super(pUtil);
 
-		this.mGenJavaRoot = pGenJavaRoot;
-		this.mGenCppRoot = pGenCppRoot;
-		this.mGenJavaFormatter = pGenJavaFormatter;
-		this.mGenCppFormatter = pGenCppFormatter;
+		this.mProxyJavaRoot = pProxyJavaRoot;
+		this.mProxyCppRoot = pProxyCppRoot;
+		this.mProxyJavaFormatter = pGenJavaFormatter;
+		this.mProxyCppFormatter = pGenCppFormatter;
 	}
 
 	// ===========================================================
@@ -58,8 +58,8 @@ public class EnumGenerator extends Generator {
 	// ===========================================================
 
 	public void generateEnumCode(final Class<?> pClass) throws IOException {
-		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mGenJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
+		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mProxyJavaFormatter);
+		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mProxyCppFormatter);
 
 		genJavaClassFileWriter.begin();
 		genCppClassFileWriter.begin();

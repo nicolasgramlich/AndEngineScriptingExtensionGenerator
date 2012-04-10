@@ -28,38 +28,31 @@ public class AndEngineScriptingExtensionGenerator {
 	// Fields
 	// ===========================================================
 
-	@Option(required = true, name = "-in-java-root")
-	private File mInJavaRoot;
+	@Option(required = true, name = "-in-java-root") private File mInJavaRoot;
+	@Option(required = true, name = "-in-javabin-root") private File mInJavaBinRoot;
+	@Option(required = true, name = "-proxy-cpp-root") private File mProxyCppRoot;
+	@Option(required = true, name = "-proxy-java-root") private File mProxyJavaRoot;
 
-	@Option(required = true, name = "-in-javabin-root")
-	private File mInJavaBinRoot;
+	@Option(required = false, name = "-proxy-java-class-suffix") private String mProxyJavaClassSuffix = "Proxy";
+	@Option(required = false, name = "-proxy-java-formatter") private JavaFormatter mProxyJavaFormatter;
 
-	@Option(required = true, name = "-gen-cpp-root")
-	private File mGenCppRoot;
+	@Option(required = false, name = "-proxy-cpp-class-suffix") private String mProxyCppClassSuffix = "";
+	@Option(required = false, name = "-proxy-cpp-formatter") private CppFormatter mProxyCppFormatter;
 
-	@Option(required = true, name = "-gen-java-root")
-	private File mGenJavaRoot;
+	@Option(required = false, name = "-proxy-method-include", multiValued = true) private List<String> mProxyMethodsInclude;
+	@Option(required = false, name = "-proxy-class-exclude", multiValued = true) private List<String> mProxyClassesExclude;
 
-	@Option(required = false, name = "-gen-java-class-suffix")
-	private String mGenJavaClassSuffix = "Proxy";
+	@Option(required = true, name = "-proxy-class", multiValued = true) private List<String> mFullyQualifiedClassNames;
 
-	@Option(required = false, name = "-gen-java-formatter")
-	private JavaFormatter mGenJavaFormatter;
 
-	@Option(required = false, name = "-gen-cpp-class-suffix")
-	private String mGenCppClassSuffix = "";
+	@Option(required = false, name = "-javascript-root") private File mJavaScriptRoot;
 
-	@Option(required = false, name = "-gen-cpp-formatter")
-	private CppFormatter mGenCppFormatter;
+	@Option(required = true, name = "-javascript-class-prefix") private String mJavaScriptClassPrefix; 
+	@Option(required = false, name = "-javascript-class-suffix") private String mJavaScriptClassSuffix = "";
 
-	@Option(required = false, name = "-gen-method-include", multiValued = true)
-	private List<String> mGenMethodsInclude;
+	@Option(required = false, name = "-javascript-method-include", multiValued = true) private List<String> mJavaScriptMethodsInclude;
 
-	@Option(required = false, name = "-gen-class-exclude", multiValued = true)
-	private List<String> mGenClassesExclude;
-
-	@Option(required = true, name = "-class", multiValued = true)
-	private List<String> mFullyQualifiedClassNames;
+	@Option(required = true, name = "-javascript-class", multiValued = true) private List<String> mJavaScriptClassNames;
 
 	private final File mInJavaBinRootClasses;
 
@@ -79,7 +72,7 @@ public class AndEngineScriptingExtensionGenerator {
 		parser.parseArgument(pArgs);
 
 		this.mInJavaBinRootClasses = new File(this.mInJavaBinRoot, "classes/");
-		this.mUtil = new Util(this.mGenJavaClassSuffix, this.mGenCppClassSuffix, this.mGenMethodsInclude, this.mGenClassesExclude);
+		this.mUtil = new Util(this.mProxyJavaClassSuffix, this.mProxyCppClassSuffix, this.mProxyMethodsInclude, this.mProxyClassesExclude);
 
 		this.checkArguments();
 
@@ -107,15 +100,15 @@ public class AndEngineScriptingExtensionGenerator {
 			throw new IllegalArgumentException("TODO Explain!");
 		}
 
-		if(!this.mGenCppRoot.exists()) {
+		if(!this.mProxyCppRoot.exists()) {
 			throw new IllegalArgumentException("TODO Explain!");
 		}
 
-		if(!this.mGenJavaRoot.exists()) {
+		if(!this.mProxyJavaRoot.exists()) {
 			throw new IllegalArgumentException("TODO Explain!");
 		}
 
-		if(this.mGenJavaClassSuffix.contains(" ")) {
+		if(this.mProxyJavaClassSuffix.contains(" ")) {
 			throw new IllegalArgumentException("TODO Explain!");
 		}
 
@@ -141,11 +134,11 @@ public class AndEngineScriptingExtensionGenerator {
 
 				System.out.print("Generating: '" + className + "' ...");
 				if(clazz.isInterface()) {
-					new InterfaceGenerator(this.mGenCppRoot, this.mGenCppFormatter, this.mUtil).generateInterfaceCode(clazz);
+					new InterfaceGenerator(this.mProxyCppRoot, this.mProxyCppFormatter, this.mUtil).generateInterfaceCode(clazz);
 				} else if(clazz.isEnum()) {
-					new EnumGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mUtil).generateEnumCode(clazz);
+					new EnumGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mUtil).generateEnumCode(clazz);
 				} else {
-					new ClassGenerator(this.mGenJavaRoot, this.mGenCppRoot, this.mGenJavaFormatter, this.mGenCppFormatter, this.mUtil).generateClassCode(clazz);
+					new ClassGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mUtil).generateClassCode(clazz);
 				}
 				System.out.println(" done!");
 			} catch (final Throwable t) {

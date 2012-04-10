@@ -32,8 +32,8 @@ public class ClassGenerator extends Generator {
 	// Fields
 	// ===========================================================
 
-	private final File mGenCppRoot;
-	private final File mGenJavaRoot;
+	private final File mProxyCppRoot;
+	private final File mProxyJavaRoot;
 	private final JavaFormatter mGenJavaFormatter;
 	private final CppFormatter mGenCppFormatter;
 
@@ -41,11 +41,11 @@ public class ClassGenerator extends Generator {
 	// Constructors
 	// ===========================================================
 
-	public ClassGenerator(final File pGenJavaRoot, final File pGenCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public ClassGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
 		super(pUtil);
 
-		this.mGenCppRoot = pGenCppRoot;
-		this.mGenJavaRoot = pGenJavaRoot;
+		this.mProxyCppRoot = pProxyCppRoot;
+		this.mProxyJavaRoot = pProxyJavaRoot;
 		this.mGenJavaFormatter = pGenJavaFormatter;
 		this.mGenCppFormatter = pGenCppFormatter;
 	}
@@ -63,8 +63,8 @@ public class ClassGenerator extends Generator {
 	// ===========================================================
 
 	public void generateClassCode(final Class<?> pClass) throws IOException {
-		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mGenJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mGenCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
+		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
+		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
 
 		genJavaClassFileWriter.begin();
 		genCppClassFileWriter.begin();
