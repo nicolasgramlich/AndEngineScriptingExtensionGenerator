@@ -28,18 +28,24 @@ public class Util {
 
 	private final String mProxyJavaClassSuffix;
 	private final String mProxyCppClassSuffix;
+	private final String mJavaScriptCppClassPrefix;
+	private final String mJavaScriptCppClassSuffix;
 	private final List<String> mProxyMethodsInclude;
 	private final List<String> mProxyClassesExclude;
+	private final List<String> mJavaScriptMethodsInclude;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix, final List<String> pGenMethodsInclude, final List<String> pGenClassesExclude) {
+	public Util(final String pGenJavaClassSuffix, final String pGenCppClassSuffix, final String pJavaScriptCppClassPrefix, final String pJavaScriptCppClassSuffix, final List<String> pGenMethodsInclude, final List<String> pGenClassesExclude, final List<String> pJavaScriptMethodsInclude) {
 		this.mProxyJavaClassSuffix = pGenJavaClassSuffix;
 		this.mProxyCppClassSuffix = pGenCppClassSuffix;
+		this.mJavaScriptCppClassPrefix = pJavaScriptCppClassPrefix;
+		this.mJavaScriptCppClassSuffix = pJavaScriptCppClassSuffix;
 		this.mProxyMethodsInclude = pGenMethodsInclude;
 		this.mProxyClassesExclude = pGenClassesExclude;
+		this.mJavaScriptMethodsInclude = pJavaScriptMethodsInclude;
 	}
 
 	// ===========================================================
@@ -51,23 +57,45 @@ public class Util {
 	// ===========================================================
 
 	public File getInJavaClassSourceFile(final File pInJavaRoot, final String pFullyQualifiedClassName) {
-		return new File(pInJavaRoot, pFullyQualifiedClassName.replace('.', File.separatorChar) + ".java");
+		final String filename = pFullyQualifiedClassName.replace('.', File.separatorChar) + ".java";
+		return new File(pInJavaRoot, filename);
 	}
 
 	public File getInJavaClassFile(final File pInJavaBinRootClasses, final String pFullyQualifiedClassName) {
-		return new File(pInJavaBinRootClasses, pFullyQualifiedClassName.replace('.', File.separatorChar) + ".class");
+		final String filename = pFullyQualifiedClassName.replace('.', File.separatorChar) + ".class";
+		return new File(pInJavaBinRootClasses, filename);
 	}
 
 	public File getGenJavaClassSourceFile(final File pProxyJavaRoot, final Class<?> pClass) {
-		return new File(pProxyJavaRoot, this.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + this.mProxyJavaClassSuffix + ".java");
+		final String filename = this.getGenJavaClassFullyQualifiedName(pClass).replace('.', File.separatorChar) + this.mProxyJavaClassSuffix + ".java";
+		return new File(pProxyJavaRoot, filename);
 	}
 
-	public File getGenCppClassSourceFile(final File pProxyCppRoot, final Class<?> pClass) {
-		return new File(pProxyCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".cpp");
+	public File getProxyCppClassSourceFile(final File pProxyCppRoot, final Class<?> pClass) {
+		final String filename = pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".cpp";
+		return new File(pProxyCppRoot, filename);
 	}
 
-	public File getGenCppClassHeaderFile(final File pProxyCppRoot, final Class<?> pClass) {
-		return new File(pProxyCppRoot, pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".h");
+	public File getProxyCppClassHeaderFile(final File pProxyCppRoot, final Class<?> pClass) {
+		final String filename = pClass.getName().replace('.', File.separatorChar) + this.mProxyCppClassSuffix + ".h";
+		return new File(pProxyCppRoot, filename);
+	}
+
+	public File getJavaScriptCppClassSourceFile(final File pProxyCppRoot, final Class<?> pClass) {
+		final String filename = getJavaScriptCppClassFileName(pClass) + ".cpp";
+		return new File(pProxyCppRoot, filename);
+	}
+	
+	public File getJavaScriptCppClassHeaderFile(final File pProxyCppRoot, final Class<?> pClass) {
+		final String filename = getJavaScriptCppClassFileName(pClass) + ".h";
+		return new File(pProxyCppRoot, filename);
+	}
+
+	private String getJavaScriptCppClassFileName(final Class<?> pClass) {
+		final String className = pClass.getName().replace('.', File.separatorChar);
+		
+		final int split = className.lastIndexOf(File.separatorChar);
+		return className.substring(0, split + 1) + this.mJavaScriptCppClassPrefix + className.substring(split + 1, className.length()) + this.mJavaScriptCppClassSuffix;
 	}
 
 	public String getGenCppClassInclude(final Class<?> pClass) {
@@ -653,20 +681,30 @@ public class Util {
 		}
 	}
 
-	public boolean isGenMethodIncluded(final Method pMethod) {
+	public boolean isProxyMethodIncluded(final Method pMethod) {
 		final String methodName = pMethod.getName();
-		for(final String genMethodInclude : this.mProxyMethodsInclude) {
-			if(genMethodInclude.equals(methodName)) {
+		for(final String proxyMethodInclude : this.mProxyMethodsInclude) {
+			if(proxyMethodInclude.equals(methodName)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	public boolean isGenClassIncluded(final Class<?> pClass) {
+	public boolean isJavaScriptMethodIncluded(final Method pMethod) {
+		final String methodName = pMethod.getName();
+		for(final String javaScriptMethodInclude : this.mJavaScriptMethodsInclude) {
+			if(javaScriptMethodInclude.equals(methodName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean isProxyClassIncluded(final Class<?> pClass) {
 		final String className = pClass.getName();
-		for(final String genClassExclude : this.mProxyClassesExclude) {
-			if(genClassExclude.equals(className)) {
+		for(final String proxyClassExclude : this.mProxyClassesExclude) {
+			if(proxyClassExclude.equals(className)) {
 				return false;
 			}
 		}

@@ -37,9 +37,9 @@ public class ProxyCppClassFileWriter {
 		if(pHeaderFileOnly) {
 			this.mGenCppClassSourceFileWriter = null;
 		} else {
-			this.mGenCppClassSourceFileWriter = new GenFileWriter<ProxyCppClassSourceFileSegment>(pUtil.getGenCppClassSourceFile(pProxyCppRoot, pClass), pCppFormatter);
+			this.mGenCppClassSourceFileWriter = new GenFileWriter<ProxyCppClassSourceFileSegment>(pUtil.getProxyCppClassSourceFile(pProxyCppRoot, pClass), pCppFormatter);
 		}
-		this.mGenCppClassHeaderFileWriter = new GenFileWriter<ProxyCppClassHeaderFileSegment>(pUtil.getGenCppClassHeaderFile(pProxyCppRoot, pClass), pCppFormatter);
+		this.mGenCppClassHeaderFileWriter = new GenFileWriter<ProxyCppClassHeaderFileSegment>(pUtil.getProxyCppClassHeaderFile(pProxyCppRoot, pClass), pCppFormatter);
 	}
 
 	// ===========================================================

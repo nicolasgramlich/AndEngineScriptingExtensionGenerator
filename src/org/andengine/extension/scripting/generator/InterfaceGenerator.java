@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.CppFormatter;
+import org.andengine.extension.scripting.generator.util.adt.JavaFormatter;
 import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter;
 import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
 
@@ -24,18 +25,29 @@ public class InterfaceGenerator extends Generator {
 	// Fields
 	// ===========================================================
 
+	private final File mProxyJavaRoot;
 	private final File mProxyCppRoot;
-	private final CppFormatter mGenCppFormatter;
+	private final File mJavaScriptCppRoot;
+	private final JavaFormatter mProxyJavaFormatter;
+	private final CppFormatter mProxyCppFormatter;
+	private final CppFormatter mJavaScriptCppFormatter;
+
+	private final boolean mGenerateJavaScriptClass;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public InterfaceGenerator(final File pProxyCppRoot, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public InterfaceGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final File pJavaScriptCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final CppFormatter pJavaScriptCppFormatter, final Util pUtil, boolean pGenerateJavaScriptClass) {
 		super(pUtil);
 
+		this.mProxyJavaRoot = pProxyJavaRoot;
 		this.mProxyCppRoot = pProxyCppRoot;
-		this.mGenCppFormatter = pGenCppFormatter;
+		this.mJavaScriptCppRoot = pJavaScriptCppRoot;
+		this.mProxyJavaFormatter = pGenJavaFormatter;
+		this.mProxyCppFormatter = pGenCppFormatter;
+		this.mJavaScriptCppFormatter = pJavaScriptCppFormatter;
+		this.mGenerateJavaScriptClass = pGenerateJavaScriptClass;
 	}
 
 	// ===========================================================
@@ -51,7 +63,7 @@ public class InterfaceGenerator extends Generator {
 	// ===========================================================
 
 	public void generateInterfaceCode(final Class<?> pClass) throws IOException {
-		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter, true);
+		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mProxyCppFormatter, true);
 		proxyCppClassFileWriter.begin();
 
 		this.generateInterfaceHeader(pClass, proxyCppClassFileWriter);
@@ -104,7 +116,7 @@ public class InterfaceGenerator extends Generator {
 
 	private void generateInterfaceMethods(final Class<?> pClass, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(this.mUtil.isGenMethodIncluded(method)) {
+			if(this.mUtil.isProxyMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
 					this.generateIncludes(pProxyCppClassFileWriter, method.getParameterTypes());

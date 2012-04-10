@@ -29,20 +29,27 @@ public class EnumGenerator extends Generator {
 
 	private final File mProxyJavaRoot;
 	private final File mProxyCppRoot;
+	private final File mJavaScriptCppRoot;
 	private final JavaFormatter mProxyJavaFormatter;
 	private final CppFormatter mProxyCppFormatter;
+	private final CppFormatter mJavaScriptCppFormatter;
+
+	private final boolean mGenerateJavaScriptClass;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public EnumGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public EnumGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final File pJavaScriptCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final CppFormatter pJavaScriptCppFormatter, final Util pUtil, boolean pGenerateJavaScriptClass) {
 		super(pUtil);
 
 		this.mProxyJavaRoot = pProxyJavaRoot;
 		this.mProxyCppRoot = pProxyCppRoot;
+		this.mJavaScriptCppRoot = pJavaScriptCppRoot;
 		this.mProxyJavaFormatter = pGenJavaFormatter;
 		this.mProxyCppFormatter = pGenCppFormatter;
+		this.mJavaScriptCppFormatter = pJavaScriptCppFormatter;
+		this.mGenerateJavaScriptClass = pGenerateJavaScriptClass;
 	}
 
 	// ===========================================================

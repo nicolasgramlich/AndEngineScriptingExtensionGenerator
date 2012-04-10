@@ -42,13 +42,15 @@ public class AndEngineScriptingExtensionGenerator {
 	@Option(required = false, name = "-proxy-method-include", multiValued = true) private List<String> mProxyMethodsInclude;
 	@Option(required = false, name = "-proxy-class-exclude", multiValued = true) private List<String> mProxyClassesExclude;
 
-	@Option(required = true, name = "-proxy-class", multiValued = true) private List<String> mFullyQualifiedClassNames;
+	@Option(required = true, name = "-proxy-class", multiValued = true) private List<String> mProxyClassNames;
 
 
-	@Option(required = false, name = "-javascript-root") private File mJavaScriptRoot;
+	@Option(required = false, name = "-javascript-cpp-root") private File mJavaScriptCppRoot;
 
-	@Option(required = true, name = "-javascript-class-prefix") private String mJavaScriptClassPrefix; 
-	@Option(required = false, name = "-javascript-class-suffix") private String mJavaScriptClassSuffix = "";
+	@Option(required = false, name = "-javascript-cpp-class-prefix") private String mJavaScriptCppClassPrefix = "S_"; 
+	@Option(required = false, name = "-javascript-cpp-class-suffix") private String mJavaScriptCppClassSuffix = "";
+
+	@Option(required = false, name = "-javascript-cpp-formatter") private CppFormatter mJavaScriptCppFormatter;
 
 	@Option(required = false, name = "-javascript-method-include", multiValued = true) private List<String> mJavaScriptMethodsInclude;
 
@@ -72,7 +74,7 @@ public class AndEngineScriptingExtensionGenerator {
 		parser.parseArgument(pArgs);
 
 		this.mInJavaBinRootClasses = new File(this.mInJavaBinRoot, "classes/");
-		this.mUtil = new Util(this.mProxyJavaClassSuffix, this.mProxyCppClassSuffix, this.mProxyMethodsInclude, this.mProxyClassesExclude);
+		this.mUtil = new Util(this.mProxyJavaClassSuffix, this.mProxyCppClassSuffix, this.mJavaScriptCppClassPrefix, this.mJavaScriptCppClassSuffix, this.mProxyMethodsInclude, this.mProxyClassesExclude, this.mJavaScriptMethodsInclude);
 
 		this.checkArguments();
 
@@ -112,7 +114,7 @@ public class AndEngineScriptingExtensionGenerator {
 			throw new IllegalArgumentException("TODO Explain!");
 		}
 
-		for(final String className : this.mFullyQualifiedClassNames) {
+		for(final String className : this.mProxyClassNames) {
 			final File classSourceFile = this.mUtil.getInJavaClassSourceFile(this.mInJavaRoot, className);
 			if(!classSourceFile.exists()) {
 				throw new IllegalArgumentException("'" + classSourceFile + "' does not exist!");
@@ -125,20 +127,22 @@ public class AndEngineScriptingExtensionGenerator {
 	}
 
 	private void generateCode() {
-		for(final String className : this.mFullyQualifiedClassNames) {
+		for(final String className : this.mProxyClassNames) {
 			try {
 				final URI uri = this.mInJavaBinRootClasses.toURI();
 				final ClassLoader classLoader = new URLClassLoader(new URL[]{uri.toURL()});
 
 				final Class<?> clazz = classLoader.loadClass(className);
+				
+				final boolean generateJavaScriptClass = this.hasJavaScriptClassName(className);
 
-				System.out.print("Generating: '" + className + "' ...");
+				System.out.format("Generating: '%s' ...", className);
 				if(clazz.isInterface()) {
-					new InterfaceGenerator(this.mProxyCppRoot, this.mProxyCppFormatter, this.mUtil).generateInterfaceCode(clazz);
+					new InterfaceGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mJavaScriptCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mJavaScriptCppFormatter, this.mUtil, generateJavaScriptClass).generateInterfaceCode(clazz);
 				} else if(clazz.isEnum()) {
-					new EnumGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mUtil).generateEnumCode(clazz);
+					new EnumGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mJavaScriptCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mJavaScriptCppFormatter, this.mUtil, generateJavaScriptClass).generateEnumCode(clazz);
 				} else {
-					new ClassGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mUtil).generateClassCode(clazz);
+					new ClassGenerator(this.mProxyJavaRoot, this.mProxyCppRoot, this.mJavaScriptCppRoot, this.mProxyJavaFormatter, this.mProxyCppFormatter, this.mJavaScriptCppFormatter, this.mUtil, generateJavaScriptClass).generateClassCode(clazz);
 				}
 				System.out.println(" done!");
 			} catch (final Throwable t) {
@@ -146,6 +150,15 @@ public class AndEngineScriptingExtensionGenerator {
 				System.out.println(" ERROR!");
 			}
 		}
+	}
+
+	private boolean hasJavaScriptClassName(final String pClassName) {
+		for(final String className : this.mJavaScriptClassNames) {
+			if(className.equals(pClassName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// ===========================================================

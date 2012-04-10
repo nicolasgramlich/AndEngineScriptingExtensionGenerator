@@ -9,6 +9,8 @@ import java.lang.reflect.Modifier;
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.CppFormatter;
 import org.andengine.extension.scripting.generator.util.adt.JavaFormatter;
+import org.andengine.extension.scripting.generator.util.adt.io.JavaScriptCppClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.JavaScriptCppClassFileWriter.JavaScriptClassSourceFileSegment;
 import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter;
 import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
 import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassSourceFileSegment;
@@ -32,22 +34,29 @@ public class ClassGenerator extends Generator {
 	// Fields
 	// ===========================================================
 
-	private final File mProxyCppRoot;
 	private final File mProxyJavaRoot;
-	private final JavaFormatter mGenJavaFormatter;
-	private final CppFormatter mGenCppFormatter;
+	private final File mProxyCppRoot;
+	private final File mJavaScriptCppRoot;
+	private final JavaFormatter mProxyJavaFormatter;
+	private final CppFormatter mProxyCppFormatter;
+	private final CppFormatter mJavaScriptCppFormatter;
+
+	private final boolean mGenerateJavaScriptClass;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public ClassGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final Util pUtil) {
+	public ClassGenerator(final File pProxyJavaRoot, final File pProxyCppRoot, final File pJavaScriptCppRoot, final JavaFormatter pGenJavaFormatter, final CppFormatter pGenCppFormatter, final CppFormatter pJavaScriptCppFormatter, final Util pUtil, boolean pGenerateJavaScriptClass) {
 		super(pUtil);
 
-		this.mProxyCppRoot = pProxyCppRoot;
 		this.mProxyJavaRoot = pProxyJavaRoot;
-		this.mGenJavaFormatter = pGenJavaFormatter;
-		this.mGenCppFormatter = pGenCppFormatter;
+		this.mProxyCppRoot = pProxyCppRoot;
+		this.mJavaScriptCppRoot = pJavaScriptCppRoot;
+		this.mProxyJavaFormatter = pGenJavaFormatter;
+		this.mProxyCppFormatter = pGenCppFormatter;
+		this.mJavaScriptCppFormatter = pJavaScriptCppFormatter;
+		this.mGenerateJavaScriptClass = pGenerateJavaScriptClass;
 	}
 
 	// ===========================================================
@@ -63,11 +72,13 @@ public class ClassGenerator extends Generator {
 	// ===========================================================
 
 	public void generateClassCode(final Class<?> pClass) throws IOException {
-		final ProxyJavaClassFileWriter proxyJavaClassFileWriter = new ProxyJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
-		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
+		final ProxyJavaClassFileWriter proxyJavaClassFileWriter = new ProxyJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mProxyJavaFormatter);
+		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mProxyCppFormatter);
+		final JavaScriptCppClassFileWriter javaScriptCppClassFileWriter = new JavaScriptCppClassFileWriter(this.mJavaScriptCppRoot, pClass, this.mUtil, this.mJavaScriptCppFormatter);
 
 		proxyJavaClassFileWriter.begin();
 		proxyCppClassFileWriter.begin();
+		javaScriptCppClassFileWriter.begin();
 
 		this.generateClassHeader(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
 		this.generateClassFields(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
@@ -81,6 +92,7 @@ public class ClassGenerator extends Generator {
 
 		proxyJavaClassFileWriter.end();
 		proxyCppClassFileWriter.end();
+		javaScriptCppClassFileWriter.end();
 	}
 
 	private void generateClassHeader(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
@@ -145,7 +157,7 @@ public class ClassGenerator extends Generator {
 				}
 				final Class<?>[] interfaces = pClass.getInterfaces();
 				for(final Class<?> interfaze : interfaces) {
-					if(this.mUtil.isGenClassIncluded(interfaze)) {
+					if(this.mUtil.isProxyClassIncluded(interfaze)) {
 						this.generateIncludes(pProxyCppClassFileWriter, interfaze);
 						pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, ", public %s", this.mUtil.getGenCppClassName(interfaze));
 					}
@@ -357,7 +369,7 @@ public class ClassGenerator extends Generator {
 
 	private void generateClassMethods(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
-			if(this.mUtil.isGenMethodIncluded(method)) {
+			if(this.mUtil.isProxyMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
 					this.generateClassCallback(pClass, method, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);

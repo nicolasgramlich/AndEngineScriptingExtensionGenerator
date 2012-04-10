@@ -120,8 +120,8 @@ java \
 		-proxy-class org.andengine.entity.shape.IAreaShape \
 		-proxy-class org.andengine.entity.shape.RectangularShape \
 		\
-		-javascript-root ${ANDENGINE_SCRIPTINGEXTENSION_ROOT}jni/src \
-		-javascript-class-prefix S_ \
+		-javascript-cpp-root ${ANDENGINE_SCRIPTINGEXTENSION_ROOT}jni/src \
+		-javascript-cpp-class-prefix X_ \
 		-javascript-method-include getX \
 		-javascript-method-include getY \
 		-javascript-class org.andengine.entity.Entity

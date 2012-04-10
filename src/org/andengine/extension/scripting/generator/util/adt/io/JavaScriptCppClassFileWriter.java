@@ -22,7 +22,7 @@ public class JavaScriptCppClassFileWriter {
 	// Fields
 	// ===========================================================
 
-	private final GenFileWriter<GenCppClassSourceFileSegment> mGenCppClassSourceFileWriter;
+	private final GenFileWriter<JavaScriptClassSourceFileSegment> mGenCppClassSourceFileWriter;
 	private final GenFileWriter<GenCppClassHeaderFileSegment> mGenCppClassHeaderFileWriter;
 
 	// ===========================================================
@@ -30,16 +30,8 @@ public class JavaScriptCppClassFileWriter {
 	// ===========================================================
 
 	public JavaScriptCppClassFileWriter(final File pProxyCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter) {
-		this(pProxyCppRoot, pClass, pUtil, pCppFormatter, false);
-	}
-
-	public JavaScriptCppClassFileWriter(final File pProxyCppRoot, final Class<?> pClass, final Util pUtil, final CppFormatter pCppFormatter, final boolean pHeaderFileOnly) {
-		if(pHeaderFileOnly) {
-			this.mGenCppClassSourceFileWriter = null;
-		} else {
-			this.mGenCppClassSourceFileWriter = new GenFileWriter<GenCppClassSourceFileSegment>(pUtil.getGenCppClassSourceFile(pProxyCppRoot, pClass), pCppFormatter);
-		}
-		this.mGenCppClassHeaderFileWriter = new GenFileWriter<GenCppClassHeaderFileSegment>(pUtil.getGenCppClassHeaderFile(pProxyCppRoot, pClass), pCppFormatter);
+		this.mGenCppClassSourceFileWriter = new GenFileWriter<JavaScriptClassSourceFileSegment>(pUtil.getJavaScriptCppClassSourceFile(pProxyCppRoot, pClass), pCppFormatter);
+		this.mGenCppClassHeaderFileWriter = new GenFileWriter<GenCppClassHeaderFileSegment>(pUtil.getJavaScriptCppClassHeaderFile(pProxyCppRoot, pClass), pCppFormatter);
 	}
 
 	// ===========================================================
@@ -68,16 +60,16 @@ public class JavaScriptCppClassFileWriter {
 		this.mGenCppClassHeaderFileWriter.end();
 	}
 
-	public GenFileWriterSegment append(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment, final String pString) {
-		return this.mGenCppClassSourceFileWriter.append(pGenCppClassSourceFileSegment, pString);
+	public GenFileWriterSegment append(final JavaScriptClassSourceFileSegment pJavaScriptClassSourceFileSegment, final String pString) {
+		return this.mGenCppClassSourceFileWriter.append(pJavaScriptClassSourceFileSegment, pString);
 	}
 
-	public GenFileWriterSegment append(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment, final String pString, final Object ... pArguments) {
-		return this.mGenCppClassSourceFileWriter.append(pGenCppClassSourceFileSegment, pString, pArguments);
+	public GenFileWriterSegment append(final JavaScriptClassSourceFileSegment pJavaScriptClassSourceFileSegment, final String pString, final Object ... pArguments) {
+		return this.mGenCppClassSourceFileWriter.append(pJavaScriptClassSourceFileSegment, pString, pArguments);
 	}
 
-	public GenFileWriterSegment endLine(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment) {
-		return this.mGenCppClassSourceFileWriter.endLine(pGenCppClassSourceFileSegment);
+	public GenFileWriterSegment endLine(final JavaScriptClassSourceFileSegment pJavaScriptClassSourceFileSegment) {
+		return this.mGenCppClassSourceFileWriter.endLine(pJavaScriptClassSourceFileSegment);
 	}
 
 	public GenFileWriterSegment append(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment, final String pString) {
@@ -96,23 +88,23 @@ public class JavaScriptCppClassFileWriter {
 		return this.mGenCppClassHeaderFileWriter.incrementIndent(pGenCppClassHeaderFileSegment);
 	}
 
-	public GenFileWriterSegment incrementIndent(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment) {
-		return this.mGenCppClassSourceFileWriter.incrementIndent(pGenCppClassSourceFileSegment);
+	public GenFileWriterSegment incrementIndent(final JavaScriptClassSourceFileSegment pJavaScriptClassSourceFileSegment) {
+		return this.mGenCppClassSourceFileWriter.incrementIndent(pJavaScriptClassSourceFileSegment);
 	}
 
 	public GenFileWriterSegment decrementIndent(final GenCppClassHeaderFileSegment pGenCppClassHeaderFileSegment) {
 		return this.mGenCppClassHeaderFileWriter.decrementIndent(pGenCppClassHeaderFileSegment);
 	}
 
-	public GenFileWriterSegment decrementIndent(final GenCppClassSourceFileSegment pGenCppClassSourceFileSegment) {
-		return this.mGenCppClassSourceFileWriter.decrementIndent(pGenCppClassSourceFileSegment);
+	public GenFileWriterSegment decrementIndent(final JavaScriptClassSourceFileSegment pJavaScriptClassSourceFileSegment) {
+		return this.mGenCppClassSourceFileWriter.decrementIndent(pJavaScriptClassSourceFileSegment);
 	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
 
-	public static enum GenCppClassSourceFileSegment {
+	public static enum JavaScriptClassSourceFileSegment {
 		// ===========================================================
 		// Elements
 		// ===========================================================
