@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.CppFormatter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
 
 /**
  * (c) Zynga 2012
@@ -51,82 +51,82 @@ public class InterfaceGenerator extends Generator {
 	// ===========================================================
 
 	public void generateInterfaceCode(final Class<?> pClass) throws IOException {
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter, true);
-		genCppClassFileWriter.begin();
+		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter, true);
+		proxyCppClassFileWriter.begin();
 
-		this.generateInterfaceHeader(pClass, genCppClassFileWriter);
-		this.generateInterfaceMethods(pClass, genCppClassFileWriter);
-		this.generateInterfaceFooter(pClass, genCppClassFileWriter);
+		this.generateInterfaceHeader(pClass, proxyCppClassFileWriter);
+		this.generateInterfaceMethods(pClass, proxyCppClassFileWriter);
+		this.generateInterfaceFooter(pClass, proxyCppClassFileWriter);
 
-		genCppClassFileWriter.end();
+		proxyCppClassFileWriter.end();
 	}
 
-	private void generateInterfaceHeader(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceHeader(final Class<?> pClass, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genCppClassName = this.mUtil.getGenCppClassName(pClass);
 		/* Generate native header. */
 		{
 			/* Header. */
 			{
 				/* #ifdef. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef %s_H", genCppClassName).end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define %s_H", genCppClassName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef %s_H", genCppClassName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define %s_H", genCppClassName).end();
 
 				/* Imports. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
 
 				/* Class. */
 				final Class<?>[] interfaces = pClass.getInterfaces();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class %s", genCppClassName);
-				this.generateIncludes(pGenCppClassFileWriter, interfaces);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, "class %s", genCppClassName);
+				this.generateIncludes(pProxyCppClassFileWriter, interfaces);
 				if(interfaces.length > 0) {
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " : ");
+					pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, " : ");
 
 					for(int i = 0; i < interfaces.length; i++) {
 						if(i > 0) {
-							pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ", ");
+							pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, ", ");
 						}
 						final Class<?> interfaze = interfaces[i];
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public %s", this.mUtil.getGenCppClassName(interfaze));
+						pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, "public %s", this.mUtil.getGenCppClassName(interfaze));
 					}
 				}
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, " {").end();
 
 				/* Methods. */
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual ~%s() { };", genCppClassName).end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap() = 0;").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual ~%s() { };", genCppClassName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap() = 0;").end();
 			}
 		}
 	}
 
-	private void generateInterfaceMethods(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceMethods(final Class<?> pClass, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
 			if(this.mUtil.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
-					this.generateIncludes(pGenCppClassFileWriter, method.getParameterTypes());
-					this.generateInterfaceCallback(pClass, method, pGenCppClassFileWriter);
+					this.generateIncludes(pProxyCppClassFileWriter, method.getParameterTypes());
+					this.generateInterfaceCallback(pClass, method, pProxyCppClassFileWriter);
 				} else {
-					this.generateIncludes(pGenCppClassFileWriter, method);
-					this.generateInterfaceMethod(pClass, method, pGenCppClassFileWriter);
+					this.generateIncludes(pProxyCppClassFileWriter, method);
+					this.generateInterfaceMethod(pClass, method, pProxyCppClassFileWriter);
 				}
 			}
 		}
 	}
 
-	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceMethod(final Class<?> pClass, final Method pMethod, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
 		final String methodName = pMethod.getName();
 
 		final String returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "").end();
+		pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "").end();
 	}
 
-	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceCallback(final Class<?> pClass, final Method pMethod, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
 		final String methodName = pMethod.getName();
 
@@ -137,15 +137,15 @@ public class InterfaceGenerator extends Generator {
 			returnTypeName = this.mUtil.getGenCppParameterTypeName(pMethod.getReturnType(), true);
 		}
 
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "");
+		pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s) = 0;", returnTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "");
 	}
 
-	private void generateInterfaceFooter(final Class<?> pClass, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateInterfaceFooter(final Class<?> pClass, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		/* Generate native footer. */
 		{
 			/* Class. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "#endif").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_END, "};").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_END, "#endif").end();
 		}
 	}
 

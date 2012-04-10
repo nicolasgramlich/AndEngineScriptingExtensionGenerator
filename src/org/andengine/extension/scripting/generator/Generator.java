@@ -6,10 +6,10 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.andengine.extension.scripting.generator.util.Util;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
-import org.andengine.extension.scripting.generator.util.adt.io.GenJavaClassFileWriter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenJavaClassFileWriter.GenJavaClassSourceFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyJavaClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyJavaClassFileWriter.ProxyJavaClassSourceFileSegment;
 
 /**
  * (c) Zynga 2012
@@ -48,57 +48,57 @@ public class Generator {
 	// Methods
 	// ===========================================================
 
-	protected void generateParameterImportsAndIncludes(final AccessibleObject pAccessibleObject, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	protected void generateParameterImportsAndIncludes(final AccessibleObject pAccessibleObject, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
 			final Class<?>[] parameterTypes = constructor.getParameterTypes();
 
-			this.generateImports(pGenJavaClassFileWriter, parameterTypes);
-			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
+			this.generateImports(pProxyJavaClassFileWriter, parameterTypes);
+			this.generateIncludes(pProxyCppClassFileWriter, parameterTypes);
 		} else if(pAccessibleObject instanceof Method) {
 			final Method method = (Method)pAccessibleObject;
 			final Class<?>[] parameterTypes = method.getParameterTypes();
 
-			this.generateImports(pGenJavaClassFileWriter, parameterTypes);
-			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
+			this.generateImports(pProxyJavaClassFileWriter, parameterTypes);
+			this.generateIncludes(pProxyCppClassFileWriter, parameterTypes);
 
-			this.generateImports(pGenJavaClassFileWriter, method.getReturnType());
-			this.generateIncludes(pGenCppClassFileWriter, method.getReturnType());
+			this.generateImports(pProxyJavaClassFileWriter, method.getReturnType());
+			this.generateIncludes(pProxyCppClassFileWriter, method.getReturnType());
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	protected void generateIncludes(final GenCppClassFileWriter pGenCppClassFileWriter, final AccessibleObject pAccessibleObject) {
+	protected void generateIncludes(final ProxyCppClassFileWriter pProxyCppClassFileWriter, final AccessibleObject pAccessibleObject) {
 		if(pAccessibleObject instanceof Constructor<?>) {
 			final Constructor<?> constructor = (Constructor<?>)pAccessibleObject;
 
-			this.generateIncludes(pGenCppClassFileWriter, constructor.getParameterTypes());
+			this.generateIncludes(pProxyCppClassFileWriter, constructor.getParameterTypes());
 		} else if(pAccessibleObject instanceof Method) {
 			final Method method = (Method)pAccessibleObject;
 			final Class<?>[] parameterTypes = method.getParameterTypes();
 
-			this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
-			this.generateIncludes(pGenCppClassFileWriter, method.getReturnType());
+			this.generateIncludes(pProxyCppClassFileWriter, parameterTypes);
+			this.generateIncludes(pProxyCppClassFileWriter, method.getReturnType());
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	protected void generateImports(final GenJavaClassFileWriter pGenJavaClassFileWriter, final Class<?> ... pTypes) {
+	protected void generateImports(final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final Class<?> ... pTypes) {
 		for(final Class<?> type : pTypes) {
 			if(!this.mUtil.isPrimitiveType(type)) {
 				final String genJavaImportClassName = this.mUtil.getGenJavaClassImport(type);
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, genJavaImportClassName).end();
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.IMPORTS, genJavaImportClassName).end();
 			}
 		}
 	}
 
-	protected void generateIncludes(final GenCppClassFileWriter pGenCppClassFileWriter, final Class<?> ... pTypes) {
+	protected void generateIncludes(final ProxyCppClassFileWriter pProxyCppClassFileWriter, final Class<?> ... pTypes) {
 		for(final Class<?> type : pTypes) {
 			if(!this.mUtil.isPrimitiveType(type)) {
 				final String genCppIncludeClassName = this.mUtil.getGenCppClassInclude(type);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, genCppIncludeClassName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, genCppIncludeClassName).end();
 			}
 		}
 	}

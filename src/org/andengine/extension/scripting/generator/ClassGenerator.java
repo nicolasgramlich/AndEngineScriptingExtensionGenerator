@@ -9,11 +9,11 @@ import java.lang.reflect.Modifier;
 import org.andengine.extension.scripting.generator.util.Util;
 import org.andengine.extension.scripting.generator.util.adt.CppFormatter;
 import org.andengine.extension.scripting.generator.util.adt.JavaFormatter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassSourceFileSegment;
-import org.andengine.extension.scripting.generator.util.adt.io.GenJavaClassFileWriter;
-import org.andengine.extension.scripting.generator.util.adt.io.GenJavaClassFileWriter.GenJavaClassSourceFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassSourceFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyJavaClassFileWriter;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyJavaClassFileWriter.ProxyJavaClassSourceFileSegment;
 
 import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
 
@@ -63,27 +63,27 @@ public class ClassGenerator extends Generator {
 	// ===========================================================
 
 	public void generateClassCode(final Class<?> pClass) throws IOException {
-		final GenJavaClassFileWriter genJavaClassFileWriter = new GenJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
-		final GenCppClassFileWriter genCppClassFileWriter = new GenCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
+		final ProxyJavaClassFileWriter proxyJavaClassFileWriter = new ProxyJavaClassFileWriter(this.mProxyJavaRoot, pClass, this.mUtil, this.mGenJavaFormatter);
+		final ProxyCppClassFileWriter proxyCppClassFileWriter = new ProxyCppClassFileWriter(this.mProxyCppRoot, pClass, this.mUtil, this.mGenCppFormatter);
 
-		genJavaClassFileWriter.begin();
-		genCppClassFileWriter.begin();
+		proxyJavaClassFileWriter.begin();
+		proxyCppClassFileWriter.begin();
 
-		this.generateClassHeader(pClass, genJavaClassFileWriter, genCppClassFileWriter);
-		this.generateClassFields(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassHeader(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
+		this.generateClassFields(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
 
-		this.generateClassConstructors(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassConstructors(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
 
 		if(!Modifier.isAbstract(pClass.getModifiers())) {
-			this.generateClassMethods(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+			this.generateClassMethods(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
 		}
-		this.generateClassFooter(pClass, genJavaClassFileWriter, genCppClassFileWriter);
+		this.generateClassFooter(pClass, proxyJavaClassFileWriter, proxyCppClassFileWriter);
 
-		genJavaClassFileWriter.end();
-		genCppClassFileWriter.end();
+		proxyJavaClassFileWriter.end();
+		proxyCppClassFileWriter.end();
 	}
 
-	private void generateClassHeader(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassHeader(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genJavaClassName = this.mUtil.getGenJavaClassName(pClass);
 		final String genJavaClassPackageName = this.mUtil.getGenJavaClassPackageName(pClass);
 		final String genCppClassName = this.mUtil.getGenCppClassName(pClass);
@@ -92,26 +92,26 @@ public class ClassGenerator extends Generator {
 		/* Generate Java header. */
 		{
 			/* Package. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.PACKAGE, "package %s;", genJavaClassPackageName).end();
+			pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.PACKAGE, "package %s;", genJavaClassPackageName).end();
 
 			/* Imports. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.IMPORTS, "import %s;", pClass.getName()).end();
+			pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.IMPORTS, "import %s;", pClass.getName()).end();
 
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTANTS);
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.FIELDS);
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.GETTERS_SETTERS);
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.METHODS);
-			pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.STATIC_METHODS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.CONSTANTS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.CONSTRUCTORS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.FIELDS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.GETTERS_SETTERS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.METHODS);
+			pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.STATIC_METHODS);
 
 			/* Class. */
 			if(Modifier.isAbstract(pClass.getModifiers())) {
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public abstract class %s extends %s {", genJavaClassName, pClass.getSimpleName()).end();
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CLASS_START, "public abstract class %s extends %s {", genJavaClassName, pClass.getSimpleName()).end();
 			} else {
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_START, "public class %s extends %s{", genJavaClassName, pClass.getSimpleName()).end();
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CLASS_START, "public class %s extends %s{", genJavaClassName, pClass.getSimpleName()).end();
 			}
 
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.STATIC_METHODS, "public static native void nativeInitClass();").end();
+			pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.STATIC_METHODS, "public static native void nativeInitClass();").end();
 		}
 
 		/* Generate native header. */
@@ -119,149 +119,149 @@ public class ClassGenerator extends Generator {
 			/* Header. */
 			{
 				/* #ifdef. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#ifndef " + genCppClassName + "_H").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_IFDEF_HEAD, "#define " + genCppClassName + "_H").end();
 
 				/* Imports. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/AndEngineScriptingExtension.h\"").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include <memory>").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include <jni.h>").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include \"src/AndEngineScriptingExtension.h\"").end();
 
 				/* Externs. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.EXTERNS, "extern \"C\" {").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.EXTERNS);
 
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL %s(JNIEnv*, jclass);", genCppNativeInitClassJNIExportMethodName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT void JNICALL %s(JNIEnv*, jclass);", genCppNativeInitClassJNIExportMethodName).end();
 
 				/* Class. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "class %s : ", genCppClassName);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, "class %s : ", genCppClassName);
 				final Class<?> superclass = pClass.getSuperclass();
 				if(Object.class.equals(superclass)) {
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end();
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public Wrapper");
+					pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, "#include \"src/Wrapper.h\"").end();
+					pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, "public Wrapper");
 				} else {
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.INCLUDES, this.mUtil.getGenCppClassInclude(superclass)).end();
-					pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, "public %s", this.mUtil.getGenCppClassName(superclass));
+					pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.INCLUDES, this.mUtil.getGenCppClassInclude(superclass)).end();
+					pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, "public %s", this.mUtil.getGenCppClassName(superclass));
 				}
 				final Class<?>[] interfaces = pClass.getInterfaces();
 				for(final Class<?> interfaze : interfaces) {
 					if(this.mUtil.isGenClassIncluded(interfaze)) {
-						this.generateIncludes(pGenCppClassFileWriter, interfaze);
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, ", public %s", this.mUtil.getGenCppClassName(interfaze));
+						this.generateIncludes(pProxyCppClassFileWriter, interfaze);
+						pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, ", public %s", this.mUtil.getGenCppClassName(interfaze));
 					}
 				}
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_START, " {").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_START, " {").end();
 
 				/* Methods. */
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "public:").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC);
 
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PROTECTED, "protected:").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PROTECTED);
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PROTECTED);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PROTECTED, "protected:").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PROTECTED);
 
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassHeaderFileSegment.METHODS_PRIVATE);
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PRIVATE);
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PRIVATE, "private:").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassHeaderFileSegment.METHODS_PRIVATE);
 
 				/* Wrapper-Constructor. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "%s(jobject);", genCppClassName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "%s(jobject);", genCppClassName).end();
 
 				/* Unwrapper. */
-				pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap();").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jobject unwrap();").end();
 			}
 
 			/* Source. */
 			{
 				/* Includes. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, "#include <cstdlib>").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.INCLUDES, "#include <cstdlib>").end();
 				final String genCppClassInclude = this.mUtil.getGenCppClassInclude(pClass);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.INCLUDES, genCppClassInclude).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.INCLUDES, genCppClassInclude).end();
 
 				/* Statics. */
 				final String genCppStaticClassMemberName = this.mUtil.getGenCppStaticClassMemberName(pClass);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jclass %s;", genCppStaticClassMemberName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.STATICS, "static jclass %s;", genCppStaticClassMemberName).end();
 
 				/* Class init. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "JNIEXPORT void JNICALL %s(JNIEnv* pJNIEnv, jclass pJClass) {", genCppNativeInitClassJNIExportMethodName).end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.CLASS_INIT);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.CLASS_INIT, "JNIEXPORT void JNICALL %s(JNIEnv* pJNIEnv, jclass pJClass) {", genCppNativeInitClassJNIExportMethodName).end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassSourceFileSegment.CLASS_INIT);
 
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "%s = (jclass)JNI_ENV()->NewGlobalRef(pJClass);", genCppStaticClassMemberName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.CLASS_INIT, "%s = (jclass)JNI_ENV()->NewGlobalRef(pJClass);", genCppStaticClassMemberName).end();
 
 				/* Wrapper-Constructor. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "%s::%s(jobject p%s) {", genCppClassName, genCppClassName, genJavaClassName).end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = p%s;", genJavaClassName).end();
-				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "%s::%s(jobject p%s) {", genCppClassName, genCppClassName, genJavaClassName).end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "this->mUnwrapped = p%s;", genJavaClassName).end();
+				pProxyCppClassFileWriter.decrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 
 				/* Unwrapper. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "jobject %s::unwrap() {", genCppClassName).end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return this->mUnwrapped;").end();
-				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "jobject %s::unwrap() {", genCppClassName).end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "return this->mUnwrapped;").end();
+				pProxyCppClassFileWriter.decrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 			}
 		}
 	}
 
-	private void generateClassFooter(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassFooter(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		/* Generate Java footer. */
 		{
 			/* Class. */
-			pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CLASS_END, "}").end();
+			pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CLASS_END, "}").end();
 		}
 
 		/* Generate native footer. */
 		{
 			/* Externs. */
-			pGenCppClassFileWriter.decrementIndent(GenCppClassHeaderFileSegment.EXTERNS);
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "}").end();
+			pProxyCppClassFileWriter.decrementIndent(ProxyCppClassHeaderFileSegment.EXTERNS);
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.EXTERNS, "}").end();
 
 			/* Class init. */
-			pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.CLASS_INIT);
-			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "}").end();
+			pProxyCppClassFileWriter.decrementIndent(ProxyCppClassSourceFileSegment.CLASS_INIT);
+			pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.CLASS_INIT, "}").end();
 
 			/* Class. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "};").end();
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.CLASS_END, "#endif").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_END, "};").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.CLASS_END, "#endif").end();
 		}
 	}
 
-	private void generateClassFields(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
-		pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.FIELDS, "private final long mAddress;").end();
+	private void generateClassFields(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
+		pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.FIELDS, "private final long mAddress;").end();
 	}
 
-	private void generateClassConstructors(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) throws ParameterNamesNotFoundException {
+	private void generateClassConstructors(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) throws ParameterNamesNotFoundException {
 		boolean zeroArgumentConstructorFound = false;
 		final Constructor<?>[] constructors = pClass.getConstructors();
 		for(final Constructor<?> constructor : constructors) {
 			if(constructor.getParameterTypes().length == 0) {
 				zeroArgumentConstructorFound = true;
 			}
-			this.generateClassConstructor(pClass, constructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+			this.generateClassConstructor(pClass, constructor, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 		}
 
 		/* We need to generate a zero-arg constructor on the native side, so that the subclasses can make use of this constructor. */
 		// TODO Think if generating a protected zero-arg constructor is viable in all cases.
 		if(!zeroArgumentConstructorFound) {
-			this.generateZeroArgumentNativeConstructor(pClass, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+			this.generateZeroArgumentNativeConstructor(pClass, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 		}
 	}
 
-	private void generateZeroArgumentNativeConstructor(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateZeroArgumentNativeConstructor(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genCppClassName = this.mUtil.getGenCppClassName(pClass);
 		/* Header. */
-		pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("();").end();
+		pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, genCppClassName).append("();").end();
 
 		/* Source. */
-		pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "%s::%s() {", genCppClassName, genCppClassName).end();
-		pGenCppClassFileWriter.endLine(GenCppClassSourceFileSegment.METHODS);
-		pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+		pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "%s::%s() {", genCppClassName, genCppClassName).end();
+		pProxyCppClassFileWriter.endLine(ProxyCppClassSourceFileSegment.METHODS);
+		pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 	}
 
-	private void generateClassConstructor(final Class<?> pClass, final Constructor<?> pConstructor, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassConstructor(final Class<?> pClass, final Constructor<?> pConstructor, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final String genJavaClassName = this.mUtil.getGenJavaClassName(pClass);
 		final String genCppClassName = this.mUtil.getGenCppClassName(pClass);
 
@@ -275,47 +275,47 @@ public class ClassGenerator extends Generator {
 				final String methodCallParamatersAsString = this.mUtil.getJavaMethodCallParamatersAsString(pConstructor);
 
 				if(pConstructor.isAnnotationPresent(Deprecated.class)) {
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "@Deprecated").end();
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "@Deprecated").end();
 				}
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "%s %s(", visibilityModifiers, genJavaClassName);
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "final long pAddress");
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "%s %s(", visibilityModifiers, genJavaClassName);
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "final long pAddress");
 				if(methodParamatersAsString != null) {
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ", %s", methodParamatersAsString);
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, ", %s", methodParamatersAsString);
 				}
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ") ");
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, ") ");
 				final Class<?>[] exceptions = pConstructor.getExceptionTypes();
 				if(exceptions.length > 0) {
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "throws ");
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "throws ");
 					for(int i = 0; i < exceptions.length; i++) {
 						final Class<?> exception = exceptions[i];
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, exception.getSimpleName());
-						this.generateImports(pGenJavaClassFileWriter, exception);
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, exception.getSimpleName());
+						this.generateImports(pProxyJavaClassFileWriter, exception);
 						final boolean isLastException = (i == (exceptions.length - 1));
 						if(!isLastException) {
-							pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ", ");
+							pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, ", ");
 						}
 					}
 				}
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "{").end();
-				pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "{").end();
+				pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.CONSTRUCTORS);
 				/* Super call. */
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "super(");
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "super(");
 				if(methodCallParamatersAsString != null) {
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, methodCallParamatersAsString);
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, methodCallParamatersAsString);
 				}
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, ");").end();
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, ");").end();
 
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "this.mAddress = pAddress;").end();
-				pGenJavaClassFileWriter.decrementIndent(GenJavaClassSourceFileSegment.CONSTRUCTORS);
-				pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.CONSTRUCTORS, "}").end();
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "this.mAddress = pAddress;").end();
+				pProxyJavaClassFileWriter.decrementIndent(ProxyJavaClassSourceFileSegment.CONSTRUCTORS);
+				pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.CONSTRUCTORS, "}").end();
 
 				/* Add imports. */
-				this.generateParameterImportsAndIncludes(pConstructor, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+				this.generateParameterImportsAndIncludes(pConstructor, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 			}
 
 			/* Generate native constructor. */
 			{
-				final GenCppClassHeaderFileSegment genCppClassHeaderFileSegment = this.mUtil.getGenCppClassHeaderFileSegmentByVisibilityModifier(modifiers);
+				final ProxyCppClassHeaderFileSegment proxyCppClassHeaderFileSegment = this.mUtil.getGenCppClassHeaderFileSegmentByVisibilityModifier(modifiers);
 
 				final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pConstructor);
 				final String genCppMethodParamatersAsString = this.mUtil.getGenCppMethodParamatersAsString(pConstructor);
@@ -324,57 +324,57 @@ public class ClassGenerator extends Generator {
 				final String jniMethodSignature = this.mUtil.getJNIMethodSignature(pConstructor);
 
 				/* Header. */
-				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppClassName);
-				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, "(");
+				pProxyCppClassFileWriter.append(proxyCppClassHeaderFileSegment, genCppClassName);
+				pProxyCppClassFileWriter.append(proxyCppClassHeaderFileSegment, "(");
 				if(genCppMethodHeaderParamatersAsString != null) {
-					pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
+					pProxyCppClassFileWriter.append(proxyCppClassHeaderFileSegment, genCppMethodHeaderParamatersAsString);
 				}
-				pGenCppClassFileWriter.append(genCppClassHeaderFileSegment, ");").end();
+				pProxyCppClassFileWriter.append(proxyCppClassHeaderFileSegment, ");").end();
 
 				final String constructorName = this.mUtil.getGenCppStaticMethodIDFieldName(pConstructor);
 				/* Source. */
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jmethodID %s;", constructorName).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.STATICS, "static jmethodID %s;", constructorName).end();
 
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "%s = JNI_ENV()->GetMethodID(%s, \"<init>\", \"%s\");", constructorName, genCppStaticClassMemberName, jniMethodSignature).end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.CLASS_INIT, "%s = JNI_ENV()->GetMethodID(%s, \"<init>\", \"%s\");", constructorName, genCppStaticClassMemberName, jniMethodSignature).end();
 
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "%s::%s(", genCppClassName, genCppClassName);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "%s::%s(", genCppClassName, genCppClassName);
 				if(genCppMethodParamatersAsString != null) {
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, genCppMethodParamatersAsString);
+					pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, genCppMethodParamatersAsString);
 				}
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ") {").end();
-				pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "this->mUnwrapped = JNI_ENV()->NewObject(%s, %s", genCppStaticClassMemberName, constructorName);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, ") {").end();
+				pProxyCppClassFileWriter.incrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "this->mUnwrapped = JNI_ENV()->NewObject(%s, %s", genCppStaticClassMemberName, constructorName);
 				if(genJNIMethodCallParamatersAsString != null) {
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ", (jlong)this, %s);", genJNIMethodCallParamatersAsString).end();
+					pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, ", (jlong)this, %s);", genJNIMethodCallParamatersAsString).end();
 				} else {
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, ", (jlong)this);").end();
+					pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, ", (jlong)this);").end();
 				}
-				pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.METHODS);
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+				pProxyCppClassFileWriter.decrementIndent(ProxyCppClassSourceFileSegment.METHODS);
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 			}
 		}
 	}
 
-	private void generateClassMethods(final Class<?> pClass, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassMethods(final Class<?> pClass, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		for(final Method method : pClass.getMethods()) {
 			if(this.mUtil.isGenMethodIncluded(method)) {
 				final String methodName = method.getName();
 				if(methodName.startsWith("on")) {
-					this.generateClassCallback(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateClassCallback(pClass, method, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 				} else {
-					this.generateClassMethod(pClass, method, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+					this.generateClassMethod(pClass, method, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 				}
 			}
 		}
 	}
 
-	private void generateClassCallback(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassCallback(final Class<?> pClass, final Method pMethod, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
 		final String methodName = pMethod.getName();
 		if((returnType == Boolean.TYPE) || (returnType == Void.TYPE)) {
 			if(Modifier.isPublic(pMethod.getModifiers())) { // TODO Is this check correct?
-				this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+				this.generateParameterImportsAndIncludes(pMethod, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 
 				final String[] parameterNames = this.mUtil.getParameterNames(pMethod);
 				final Class<?>[] parameterTypes = this.mUtil.getParameterTypes(pMethod);
@@ -391,28 +391,28 @@ public class ClassGenerator extends Generator {
 					final String methodCallParamatersAsString = this.mUtil.getJavaMethodCallParamatersAsString(pMethod);
 
 					/* Source. */
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "@Override").end();
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "%s %s %s(%s) {", visibilityModifier, returnType.getSimpleName(), methodName, (methodParamatersAsString != null) ? methodParamatersAsString : "").end();
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "@Override").end();
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "%s %s %s(%s) {", visibilityModifier, returnType.getSimpleName(), methodName, (methodParamatersAsString != null) ? methodParamatersAsString : "").end();
 
-					pGenJavaClassFileWriter.incrementIndent(GenJavaClassSourceFileSegment.METHODS);
+					pProxyJavaClassFileWriter.incrementIndent(ProxyJavaClassSourceFileSegment.METHODS);
 					if(returnType == Void.TYPE) {
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "if(!this.%s(this.mAddress%s)) {", javaNativeMethodName, (methodCallParamatersAsString != null) ? ", " + methodCallParamatersAsString : "");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "\tsuper.%s(%s);", methodName, (methodCallParamatersAsString != null) ? methodCallParamatersAsString : "");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "}").end();
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "if(!this.%s(this.mAddress%s)) {", javaNativeMethodName, (methodCallParamatersAsString != null) ? ", " + methodCallParamatersAsString : "");
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "\tsuper.%s(%s);", methodName, (methodCallParamatersAsString != null) ? methodCallParamatersAsString : "");
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "}").end();
 					} else if(returnType == Boolean.TYPE) {
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "final boolean handledNative = this.%s(this.mAddress%s);", javaNativeMethodName, (methodCallParamatersAsString != null) ?  ", " + methodCallParamatersAsString : "");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "if(handledNative) {").end();
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "\treturn true;").end();
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "} else {").end();
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "\treturn super.%s(%s);", methodName, (methodParamatersAsString != null) ? methodCallParamatersAsString : "");
-						pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "}").end();
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "final boolean handledNative = this.%s(this.mAddress%s);", javaNativeMethodName, (methodCallParamatersAsString != null) ?  ", " + methodCallParamatersAsString : "");
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "if(handledNative) {").end();
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "\treturn true;").end();
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "} else {").end();
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "\treturn super.%s(%s);", methodName, (methodParamatersAsString != null) ? methodCallParamatersAsString : "");
+						pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "}").end();
 					} else {
 						throw new IllegalStateException("Unexpected return type: '" + returnType.getName() + "'.");
 					}
-					pGenJavaClassFileWriter.decrementIndent(GenJavaClassSourceFileSegment.METHODS);
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "}").end();
+					pProxyJavaClassFileWriter.decrementIndent(ProxyJavaClassSourceFileSegment.METHODS);
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "}").end();
 
-					pGenJavaClassFileWriter.append(GenJavaClassSourceFileSegment.METHODS, "private native boolean %s(final long pAddress%s);", javaNativeMethodName, (methodParamatersAsString != null) ? ", " + methodParamatersAsString : "");
+					pProxyJavaClassFileWriter.append(ProxyJavaClassSourceFileSegment.METHODS, "private native boolean %s(final long pAddress%s);", javaNativeMethodName, (methodParamatersAsString != null) ? ", " + methodParamatersAsString : "");
 				}
 
 				/* Generate native side of the callback. */
@@ -425,39 +425,39 @@ public class ClassGenerator extends Generator {
 
 					/* Header. */
 					{
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT jboolean JNICALL %s(%s);", jniExportMethodName, jniExportMethodHeaderParamatersAsString).end();
+						pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.EXTERNS, "JNIEXPORT jboolean JNICALL %s(%s);", jniExportMethodName, jniExportMethodHeaderParamatersAsString).end();
 
-						pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jboolean %s(%s);", methodName, (cppMethodHeaderParamatersAsString != null) ? cppMethodHeaderParamatersAsString : "").end();
+						pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual jboolean %s(%s);", methodName, (cppMethodHeaderParamatersAsString != null) ? cppMethodHeaderParamatersAsString : "").end();
 					}
 
 					/* Source. */
 					{
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "JNIEXPORT jboolean JNICALL %s(%s) {", jniExportMethodName, jniExportMethodParamatersAsString);
-						pGenCppClassFileWriter.incrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "%s* %s = (%s*)pAddress;", genCppClassName, uncapitalizedGenCppClassName, genCppClassName).end();
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.JNI_EXPORTS, "JNIEXPORT jboolean JNICALL %s(%s) {", jniExportMethodName, jniExportMethodParamatersAsString);
+						pProxyCppClassFileWriter.incrementIndent(ProxyCppClassSourceFileSegment.JNI_EXPORTS);
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.JNI_EXPORTS, "%s* %s = (%s*)pAddress;", genCppClassName, uncapitalizedGenCppClassName, genCppClassName).end();
 
 						/* Wrap non-primitives in local variables on the stack. */
 						{
-							this.generateIncludes(pGenCppClassFileWriter, parameterTypes);
+							this.generateIncludes(pProxyCppClassFileWriter, parameterTypes);
 							for(int i = 0; i < parameterTypes.length; i++) {
 								final Class<?> parameterType = parameterTypes[i];
 								final String parameterName = parameterNames[i];
 								if(!this.mUtil.isPrimitiveType(parameterType)) {
 									final String genCppParameterTypeName = this.mUtil.getGenCppClassName(parameterType);
 									final String uncapitalizedGenCppParameterTypeName = this.mUtil.getGenCppLocalVariableParameterName(parameterName);
-									pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "%s %s(%s);", genCppParameterTypeName, uncapitalizedGenCppParameterTypeName, parameterName).end();
+									pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.JNI_EXPORTS, "%s %s(%s);", genCppParameterTypeName, uncapitalizedGenCppParameterTypeName, parameterName).end();
 								}
 							}
 						}
 
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "return %s->%s(%s);", uncapitalizedGenCppClassName, methodName, (cppMethodCallParamatersAsString != null) ? cppMethodCallParamatersAsString : "");
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.JNI_EXPORTS, "return %s->%s(%s);", uncapitalizedGenCppClassName, methodName, (cppMethodCallParamatersAsString != null) ? cppMethodCallParamatersAsString : "");
 
-						pGenCppClassFileWriter.decrementIndent(GenCppClassSourceFileSegment.JNI_EXPORTS);
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
+						pProxyCppClassFileWriter.decrementIndent(ProxyCppClassSourceFileSegment.JNI_EXPORTS);
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.JNI_EXPORTS, "}").end();
 
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "jboolean %s::%s(%s) {", genCppClassName, methodName, (cppMethodParamatersAsString != null) ? cppMethodParamatersAsString : "").end();
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "\treturn false;").end();
-						pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "jboolean %s::%s(%s) {", genCppClassName, methodName, (cppMethodParamatersAsString != null) ? cppMethodParamatersAsString : "").end();
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "\treturn false;").end();
+						pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 					}
 				}
 			} else {
@@ -468,10 +468,10 @@ public class ClassGenerator extends Generator {
 		}
 	}
 
-	private void generateClassMethod(final Class<?> pClass, final Method pMethod, final GenJavaClassFileWriter pGenJavaClassFileWriter, final GenCppClassFileWriter pGenCppClassFileWriter) {
+	private void generateClassMethod(final Class<?> pClass, final Method pMethod, final ProxyJavaClassFileWriter pProxyJavaClassFileWriter, final ProxyCppClassFileWriter pProxyCppClassFileWriter) {
 		final Class<?> returnType = pMethod.getReturnType();
 
-		this.generateParameterImportsAndIncludes(pMethod, pGenJavaClassFileWriter, pGenCppClassFileWriter);
+		this.generateParameterImportsAndIncludes(pMethod, pProxyJavaClassFileWriter, pProxyCppClassFileWriter);
 
 		final String genCppMethodHeaderParamatersAsString = this.mUtil.getGenCppMethodHeaderParamatersAsString(pMethod);
 		final String genCppMethodParamatersAsString = this.mUtil.getGenCppMethodParamatersAsString(pMethod);
@@ -487,28 +487,28 @@ public class ClassGenerator extends Generator {
 		/* Generate native side of the getter. */
 		{
 			/* Generate virtual method in Header. */
-			pGenCppClassFileWriter.append(GenCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s);", returnTypeGenCppParameterTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "").end(); // TODO Visiblity Modifier?
+			pProxyCppClassFileWriter.append(ProxyCppClassHeaderFileSegment.METHODS_PUBLIC, "virtual %s %s(%s);", returnTypeGenCppParameterTypeName, methodName, (genCppMethodHeaderParamatersAsString != null) ? genCppMethodHeaderParamatersAsString : "").end(); // TODO Visiblity Modifier?
 
 			/* Generate static methodID field. */
-			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.STATICS, "static jmethodID %s;", genCppStaticMethodIDFieldName).end();
+			pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.STATICS, "static jmethodID %s;", genCppStaticMethodIDFieldName).end();
 
 			/* Cache static methodID field. */
-			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.CLASS_INIT, "%s = JNI_ENV()->GetMethodID(%s, \"%s\", \"%s\");", genCppStaticMethodIDFieldName, genCppStaticClassMemberName, methodName, jniMethodSignature).end();
+			pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.CLASS_INIT, "%s = JNI_ENV()->GetMethodID(%s, \"%s\", \"%s\");", genCppStaticMethodIDFieldName, genCppStaticClassMemberName, methodName, jniMethodSignature).end();
 
 			/* Call java method using static methodID field. */
-			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "%s %s::%s(%s) {", returnTypeGenCppParameterTypeName, genCppClassName, methodName, (genCppMethodParamatersAsString != null) ? genCppMethodParamatersAsString : "").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "%s %s::%s(%s) {", returnTypeGenCppParameterTypeName, genCppClassName, methodName, (genCppMethodParamatersAsString != null) ? genCppMethodParamatersAsString : "").end();
 
 			final boolean primitiveReturnType = this.mUtil.isPrimitiveType(returnType, false);
 			if(primitiveReturnType) {
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "\t");
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "\t");
 				if(returnType != Void.TYPE) {
-					pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "return ");
+					pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "return ");
 				}
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "JNI_ENV()->%s(this->mUnwrapped, %s%s);", this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType()), genCppStaticMethodIDFieldName, (jniMethodCallParamatersAsString != null) ? ", " + jniMethodCallParamatersAsString: "").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "JNI_ENV()->%s(this->mUnwrapped, %s%s);", this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType()), genCppStaticMethodIDFieldName, (jniMethodCallParamatersAsString != null) ? ", " + jniMethodCallParamatersAsString: "").end();
 			} else {
-				pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "\treturn new %s(JNI_ENV()->%s(this->mUnwrapped, %s%s));", returnTypeGenCppParameterTypeNameWithoutPtr, this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType()), genCppStaticMethodIDFieldName, (jniMethodCallParamatersAsString != null) ? ", " + jniMethodCallParamatersAsString: "").end();
+				pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "\treturn new %s(JNI_ENV()->%s(this->mUnwrapped, %s%s));", returnTypeGenCppParameterTypeNameWithoutPtr, this.mUtil.getJNICallXYZMethodName(pMethod.getReturnType()), genCppStaticMethodIDFieldName, (jniMethodCallParamatersAsString != null) ? ", " + jniMethodCallParamatersAsString: "").end();
 			}
-			pGenCppClassFileWriter.append(GenCppClassSourceFileSegment.METHODS, "}").end();
+			pProxyCppClassFileWriter.append(ProxyCppClassSourceFileSegment.METHODS, "}").end();
 		}
 	}
 

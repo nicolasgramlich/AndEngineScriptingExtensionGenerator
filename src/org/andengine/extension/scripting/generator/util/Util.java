@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-import org.andengine.extension.scripting.generator.util.adt.io.GenCppClassFileWriter.GenCppClassHeaderFileSegment;
+import org.andengine.extension.scripting.generator.util.adt.io.ProxyCppClassFileWriter.ProxyCppClassHeaderFileSegment;
 
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 
@@ -425,11 +425,11 @@ public class Util {
 		return signatureBuilder.toString();
 	}
 
-	public GenCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
+	public ProxyCppClassHeaderFileSegment getGenCppClassHeaderFileSegmentByVisibilityModifier(final int modifiers) {
 		if(Modifier.isPublic(modifiers)) {
-			return GenCppClassHeaderFileSegment.METHODS_PUBLIC;
+			return ProxyCppClassHeaderFileSegment.METHODS_PUBLIC;
 		} else if(Modifier.isProtected(modifiers)) {
-			return GenCppClassHeaderFileSegment.METHODS_PROTECTED;
+			return ProxyCppClassHeaderFileSegment.METHODS_PROTECTED;
 		} else {
 			throw new IllegalArgumentException();
 		}

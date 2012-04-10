@@ -13,7 +13,7 @@ import org.andengine.extension.scripting.generator.util.adt.io.GenFileWriter.Gen
  * @author Nicolas Gramlich <ngramlich@zynga.com>
  * @since 15:02:38 - 21.03.2012
  */
-public class GenJavaClassFileWriter {
+public class ProxyJavaClassFileWriter {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -22,14 +22,14 @@ public class GenJavaClassFileWriter {
 	// Fields
 	// ===========================================================
 
-	private final GenFileWriter<GenJavaClassSourceFileSegment> mGenJavaClassSourceFileWriter;
+	private final GenFileWriter<ProxyJavaClassSourceFileSegment> mGenJavaClassSourceFileWriter;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public GenJavaClassFileWriter(final File pProxyJavaRoot, final Class<?> pClass, final Util pUtil, final JavaFormatter pJavaFormatter) {
-		this.mGenJavaClassSourceFileWriter = new GenFileWriter<GenJavaClassSourceFileSegment>(pUtil.getGenJavaClassSourceFile(pProxyJavaRoot, pClass), pJavaFormatter);
+	public ProxyJavaClassFileWriter(final File pProxyJavaRoot, final Class<?> pClass, final Util pUtil, final JavaFormatter pJavaFormatter) {
+		this.mGenJavaClassSourceFileWriter = new GenFileWriter<ProxyJavaClassSourceFileSegment>(pUtil.getGenJavaClassSourceFile(pProxyJavaRoot, pClass), pJavaFormatter);
 	}
 
 	// ===========================================================
@@ -52,31 +52,31 @@ public class GenJavaClassFileWriter {
 		this.mGenJavaClassSourceFileWriter.end();
 	}
 
-	public GenFileWriterSegment append(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment, final String pString) {
-		return this.mGenJavaClassSourceFileWriter.append(pGenJavaClassSourceFileSegment, pString);
+	public GenFileWriterSegment append(final ProxyJavaClassSourceFileSegment pProxyJavaClassSourceFileSegment, final String pString) {
+		return this.mGenJavaClassSourceFileWriter.append(pProxyJavaClassSourceFileSegment, pString);
 	}
 
-	public GenFileWriterSegment append(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment, final String pString, final Object ... pArguments) {
-		return this.mGenJavaClassSourceFileWriter.append(pGenJavaClassSourceFileSegment, pString, pArguments);
+	public GenFileWriterSegment append(final ProxyJavaClassSourceFileSegment pProxyJavaClassSourceFileSegment, final String pString, final Object ... pArguments) {
+		return this.mGenJavaClassSourceFileWriter.append(pProxyJavaClassSourceFileSegment, pString, pArguments);
 	}
 
-	public GenFileWriterSegment endLine(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
-		return this.mGenJavaClassSourceFileWriter.endLine(pGenJavaClassSourceFileSegment);
+	public GenFileWriterSegment endLine(final ProxyJavaClassSourceFileSegment pProxyJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.endLine(pProxyJavaClassSourceFileSegment);
 	}
 
-	public GenFileWriterSegment incrementIndent(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
-		return this.mGenJavaClassSourceFileWriter.incrementIndent(pGenJavaClassSourceFileSegment);
+	public GenFileWriterSegment incrementIndent(final ProxyJavaClassSourceFileSegment pProxyJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.incrementIndent(pProxyJavaClassSourceFileSegment);
 	}
 
-	public GenFileWriterSegment decrementIndent(final GenJavaClassSourceFileSegment pGenJavaClassSourceFileSegment) {
-		return this.mGenJavaClassSourceFileWriter.decrementIndent(pGenJavaClassSourceFileSegment);
+	public GenFileWriterSegment decrementIndent(final ProxyJavaClassSourceFileSegment pProxyJavaClassSourceFileSegment) {
+		return this.mGenJavaClassSourceFileWriter.decrementIndent(pProxyJavaClassSourceFileSegment);
 	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
 
-	public static enum GenJavaClassSourceFileSegment {
+	public static enum ProxyJavaClassSourceFileSegment {
 		// ===========================================================
 		// Elements
 		// ===========================================================
